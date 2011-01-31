@@ -9,8 +9,8 @@
 using namespace ci;
 using namespace std;
 
-float GrafDrawingParams::g_RotationAmount	= 0;
-float GrafDrawingParams::g_ZExtrusion		= 0.5f;
+float GrafDrawingParams::g_RotationAmount	= 0.4;
+float GrafDrawingParams::g_ZExtrusion		= 0.2f;
 float GrafDrawingParams::g_MaxSpeed			= 20;
 float GrafDrawingParams::g_MinSpeed			= 0.1f;
 float GrafDrawingParams::g_BrushSize		= 0.1f;
@@ -175,7 +175,7 @@ void CGMLData::Draw(float time)
 
 		int num = points.size();
 
-		for(int i=0; i<num-2; ++i)
+		for(int i=0; i<num-1; ++i)
 		{
 			//if(point_it->m_Time < m_TagCollection.GetTimer())
 			{
@@ -186,6 +186,12 @@ void CGMLData::Draw(float time)
 					float speed = max(GrafDrawingParams::g_MinSpeed, min(GrafDrawingParams::g_MaxSpeed, dir.length()));
 					float width = (GrafDrawingParams::g_MaxSpeed - speed)/(GrafDrawingParams::g_MaxSpeed-GrafDrawingParams::g_MinSpeed);
 					width += 0.1f;
+					
+					if(p4 == points.end())
+					{
+						p4 = p3;
+						width = 0;
+					}
 
 					//width = p3->m_Speed;
 					
@@ -217,6 +223,9 @@ void CGMLData::Draw(float time)
 
 						start_width *= GrafDrawingParams::g_BrushSize;
 						end_width *= GrafDrawingParams::g_BrushSize;
+						
+						start_width *= age_mul;
+						end_width *= age_mul;
 
 						DrawSegment(tri_mesh, start, start_width, end, end_width, curr_index);
 					}

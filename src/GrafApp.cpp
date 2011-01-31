@@ -51,7 +51,7 @@ void GrafAppApp::setup()
 	m_Params.addParam("Z-Extrusion", &GrafDrawingParams::g_ZExtrusion, "min=0.001 max=5 step=0.1 keyIncr=z keyDecr=Z");
 	m_Params.addParam("MaxSpeed", &GrafDrawingParams::g_MaxSpeed, "min=2 max=100 step=1 keyIncr=x keyDecr=X");
 	m_Params.addParam("MinSpeed", &GrafDrawingParams::g_MinSpeed, "min=1 max=50 step=1 keyIncr=c keyDecr=C");
-	m_Params.addParam("BrushSize", &GrafDrawingParams::g_BrushSize, "min=1 max=100 step=1 keyIncr=w keyDecr=W");
+	m_Params.addParam("BrushSize", &GrafDrawingParams::g_BrushSize, "min=0 max=1 step=.01 keyIncr=w keyDecr=W");
 
 	m_Params.addParam("CirlceSubdivs", &GrafDrawingParams::g_CircleSubdivs, "min=4 max=32 step=2");
 	m_Params.addParam("SplineSubdivs", &GrafDrawingParams::g_SplineSubdivs, "min=2 max=32 step=2");
@@ -82,7 +82,7 @@ void GrafAppApp::draw()
 {
 	//glEnable( GL_LIGHTING );
 	glEnable( GL_LIGHT0 );
-	glEnable(GL_CULL_FACE);
+	//glEnable(GL_CULL_FACE);
 	//glCullFace(GL_FRONT);
 	//glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 
