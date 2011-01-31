@@ -24,9 +24,12 @@ class CGMLDataPoint
 {
 public:
 	CGMLDataPoint(float x, float y, float z, float t) : m_Pos(x, y, z), m_Time(t), m_Speed(0) {}
-	ci::Vec3f	m_Pos;
-	float		m_Time;
-	float		m_Speed;
+	ci::Vec3f		m_Pos;
+	ci::Vec3f		m_Tangent;
+	float			m_Time;
+	float			m_Speed;
+	
+	ci::Matrix44f	m_Frame;
 };
 
 //---------------------------------------------------------------------------------------------------------
@@ -35,10 +38,12 @@ class CGMLDataStroke
 public:
 	CGMLDataStroke(const ci::XmlTree& stroke_xml);
 
-	const std::list<CGMLDataPoint>&		GetData() const { return m_Points; }
-	void								ComputeSpeeds();
+	typedef std::vector <CGMLDataPoint> TPointList;
 
-	typedef std::list <CGMLDataPoint> TPointList;
+	const TPointList&					GetData() const { return m_Points; }
+	void								ComputeSpeeds();
+	void								ComputePTF();
+
 
 private:
 	

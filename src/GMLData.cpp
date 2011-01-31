@@ -73,10 +73,17 @@ void CGMLDataStroke::ComputeSpeeds()
 			{
 				max_speed = it->m_Speed;
 			}
+			
+			dir.normalize();
+			it->m_Tangent = dir;
 		}
 		else
 		{
 			it->m_Speed = 0.0f;
+			
+			Vec3f dir = m_Points[1].m_Pos - m_Points[0].m_Pos;
+			dir.normalize();
+			it->m_Tangent = dir;
 		}
 
 		prev_point = it->m_Pos;
@@ -84,6 +91,9 @@ void CGMLDataStroke::ComputeSpeeds()
 
 		first = false;
 	}
+	
+	TPointList::reverse_iterator rit = m_Points.rbegin();
+	rit->m_Speed = 0;
 
 	if(max_speed > 0)
 	{
@@ -92,6 +102,28 @@ void CGMLDataStroke::ComputeSpeeds()
 		{
 			it->m_Speed *= one_on_max_speed;
 		}
+	}
+}
+
+//*******************************************************************************************************
+void CGMLDataStroke::ComputePTF()
+{
+	int n = m_Points.size();
+	// Make sure we have at least 3 points because the first frame requires it
+	if( n >= 3 ) 
+	{
+		// Make the parallel transport frame
+		m_Points[0].m_Frame = firstFrame(m_Points[0].m_Pos, m_Points[1].m_Pos,  m_Points[2].m_Pos);
+		
+		// Make the remaining frames - saving the last
+		for(int i = 1; i < n - 1; ++i ) 
+		{
+			Vec3f prevT = m_Points[i-1].m_Tangent;
+			Vec3f curT  = m_Points[i].m_Tangent;
+			m_Points[i].m_Frame = nextFrame(m_Points[i - 1].m_Frame, m_Points[i - 1].m_Pos, m_Points[i].m_Pos, prevT, curT);
+		}
+		// Make the last frame
+		m_Points[n - 1].m_Frame = lastFrame(m_Points[n - 2].m_Frame, m_Points[n - 2].m_Pos, m_Points[n - 1].m_Pos);
 	}
 }
 
@@ -105,6 +137,7 @@ CGMLData::CGMLData(std::string file_path)
 	for(TStrokeList::iterator it = m_Strokes.begin(); it != m_Strokes.end(); ++it)
 	{
 		it->ComputeSpeeds();
+		it->ComputePTF();
 	}
 }
 
@@ -158,10 +191,6 @@ void CGMLData::Draw(float time)
 
 	for(int i=0; i<GetNumStrokes(); ++i)
 	{
-		bool first = true;
-		//Vec3f prev_point;
-		float prev_w = 0;
-		
 		const CGMLDataStroke::TPointList& points = GetStrokeData(i);
 		
 		CGMLDataStroke::TPointList::const_iterator point_it = points.begin();
@@ -177,63 +206,47 @@ void CGMLData::Draw(float time)
 
 		for(int i=0; i<num-1; ++i)
 		{
-			//if(point_it->m_Time < m_TagCollection.GetTimer())
+			float age = time - p3->m_Time;
+			age *= 10.0f;
+			float age_mul = max(0.0f, min(age, 1.0f));
+			
+			Vec3f v0(0,0,0);
+			Vec3f v1(0,0,0);
+			v1 += Vec3f(0, 0.01, 0);
+			v0 = p2->m_Frame * v0;
+			v1 = p2->m_Frame * v1;
+			
+			v0 *= scale_mul;
+			v1 *= scale_mul;
+			
+			gl::drawLine(v0, v1);
+			
+			int num_spline_subdivs = (int)GrafDrawingParams::g_SplineSubdivs;
+			for(int i=0; i<num_spline_subdivs; ++i)
 			{
-				//if(!first)
-				{
-					Vec3f dir = p3->m_Pos - p2->m_Pos;
-					dir *= scale_mul;
-					float speed = max(GrafDrawingParams::g_MinSpeed, min(GrafDrawingParams::g_MaxSpeed, dir.length()));
-					float width = (GrafDrawingParams::g_MaxSpeed - speed)/(GrafDrawingParams::g_MaxSpeed-GrafDrawingParams::g_MinSpeed);
-					width += 0.1f;
-					
-					if(p4 == points.end())
-					{
-						p4 = p3;
-						width = 0;
-					}
-
-					//width = p3->m_Speed;
-					
-					width *= GrafDrawingParams::g_BrushSize;
-
-					float age = time - p3->m_Time;
-					age *= 10.0f;
-					float age_mul = max(0.0f, min(age, 1.0f));
-					width *= age_mul;
-					
-					int num_spline_subdivs = (int)GrafDrawingParams::g_SplineSubdivs;
-					for(int i=0; i<num_spline_subdivs; ++i)
-					{
-						float t0 = i/(float)num_spline_subdivs;
-						float t1 = (i+1)/(float)num_spline_subdivs;
-
-						Vec3f start, end;
-						Spline::CatmullRom(start, t0, p1->m_Pos, p2->m_Pos, p3->m_Pos, p4->m_Pos);
-						Spline::CatmullRom(end, t1, p1->m_Pos, p2->m_Pos, p3->m_Pos, p4->m_Pos);
-
-						start *= scale_mul;
-						end *= scale_mul;
-
-						float start_width = t0 * width + (1.0f-t0) * prev_w;
-						float end_width = t1 * width + (1.0f-t1) * prev_w;
-
-						Spline::CatmullRom(start_width, t0, p1->m_Speed, p2->m_Speed, p3->m_Speed, p4->m_Speed);
-						Spline::CatmullRom(end_width, t1, p1->m_Speed, p2->m_Speed, p3->m_Speed, p4->m_Speed);
-
-						start_width *= GrafDrawingParams::g_BrushSize;
-						end_width *= GrafDrawingParams::g_BrushSize;
-						
-						start_width *= age_mul;
-						end_width *= age_mul;
-
-						DrawSegment(tri_mesh, start, start_width, end, end_width, curr_index);
-					}
-					
-					prev_w = width;
-				}
-
-				first = false;
+				float t0 = i/(float)num_spline_subdivs;
+				float t1 = (i+1)/(float)num_spline_subdivs;
+				
+				Vec3f start, end;
+				Spline::CatmullRom(start, t0, p1->m_Pos, p2->m_Pos, p3->m_Pos, p4->m_Pos);
+				Spline::CatmullRom(end, t1, p1->m_Pos, p2->m_Pos, p3->m_Pos, p4->m_Pos);
+				
+				start *= scale_mul;
+				end *= scale_mul;
+				
+				float start_width = t0 * p3->m_Speed + (1.0f-t0) * p4->m_Speed;
+				float end_width = t1 * p3->m_Speed + (1.0f-t1) * p4->m_Speed;
+				
+				Spline::CatmullRom(start_width, t0, p1->m_Speed, p2->m_Speed, p3->m_Speed, p4->m_Speed);
+				Spline::CatmullRom(end_width, t1, p1->m_Speed, p2->m_Speed, p3->m_Speed, p4->m_Speed);
+				
+				start_width *= GrafDrawingParams::g_BrushSize;
+				end_width *= GrafDrawingParams::g_BrushSize;
+				
+				start_width *= age_mul;
+				end_width *= age_mul;
+				
+				DrawSegment(tri_mesh, start, start_width, end, end_width, curr_index);
 			}
 
 			p1 = p2;
@@ -243,7 +256,7 @@ void CGMLData::Draw(float time)
 		}
 	}
 	
-	gl::draw(tri_mesh);
+	//gl::draw(tri_mesh);
 }
 
 //*******************************************************************************************************
@@ -258,20 +271,6 @@ void CGMLData::DrawSegment(TriMesh& tri_mesh, const Vec3f& p1, float w1, const V
 	{
 		float angle_1 = i*angle_inc;
 		float angle_2 = (i+1)*angle_inc;
-		
-		//highly suspicious maths but i think it might work - need to make sure that we arent adding verts twice like present tho.
-		Vec3f dir = p2 - p1;
-		dir.z = 0;
-		dir.normalize();
-		dir.x = fabsf(dir.x);
-		dir.y = fabsf(dir.y);
-		
-		dir.x = 0;
-		dir.y = 1;
-		//dir.y = 1 - dir.x;
-		
-		//Vec3f offset_1(cos(angle_1) * dir.y, cos(angle_1) * dir.x, -sin(angle_1));
-		//Vec3f offset_2(cos(angle_2) * dir.y, cos(angle_2) * dir.x, -sin(angle_2));
 
 		Vec3f offset_1(0, cos(angle_1), -sin(angle_1));
 		Vec3f offset_2(0, cos(angle_2), -sin(angle_2));
