@@ -43,10 +43,9 @@ public:
 	const TPointList&					GetData() const { return m_Points; }
 	void								ComputeSpeeds();
 	void								ComputePTF();
-
+	void								Normalise();
 
 private:
-	
 	TPointList							m_Points;
 };
 

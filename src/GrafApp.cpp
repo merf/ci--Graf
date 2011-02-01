@@ -3,6 +3,7 @@
 #include "cinder/params/Params.h"
 
 #include "cinder/Camera.h"
+#include "cinder/Arcball.h"
 
 #include "GMLData.h"
 #include "TagCollection.h"
@@ -21,6 +22,8 @@ class GrafAppApp : public AppBasic
 public:
 	void setup();
 	void mouseDown(MouseEvent event);	
+	void mouseDrag(MouseEvent event);
+	void resize(ResizeEvent event);
 	void update();
 	void draw();
 	
@@ -29,14 +32,23 @@ public:
 	CTagCollection			m_TagCollection;
 	
 	params::InterfaceGl		m_Params;
+	CameraPersp				m_Cam;
+	Arcball					mArcball;
 };
 
 //*************************************************************************************************************************
 void GrafAppApp::setup()
 {	
 	setWindowSize(800, 600);
-	
-	
+	m_Cam.lookAt(Vec3f(0, 0, -2), Vec3f::zero(), Vec3f(0, -1, 0));
+
+	// Arcball
+	mArcball.setWindowSize( getWindowSize() );
+	mArcball.setCenter( getWindowCenter() );
+	mArcball.setRadius( 150 );
+	mArcball.setConstraintAxis(Vec3f(0,1,0));
+
+
 	gl::enableDepthWrite();
 	gl::enableDepthRead();
 	gl::enableAlphaBlending();
@@ -63,9 +75,26 @@ void GrafAppApp::setup()
 }
 
 //*************************************************************************************************************************
-void GrafAppApp::mouseDown( MouseEvent event )
+void GrafAppApp::mouseDown(MouseEvent event)
 {
-	m_TagCollection.Reset();
+	Vec2i P = event.getPos();
+	P.y = getWindowHeight() - P.y;
+	mArcball.mouseDown(P);
+}
+
+//*************************************************************************************************************************
+void GrafAppApp::mouseDrag(MouseEvent event)
+{	
+	Vec2i P = event.getPos();
+	P.y = getWindowHeight() - P.y;
+	mArcball.mouseDrag(P);
+}
+
+//*************************************************************************************************************************
+void GrafAppApp::resize(ResizeEvent event)
+{
+	m_Cam.setPerspective(60, getWindowAspectRatio(), 1, 1000);
+	gl::setMatrices(m_Cam);	
 }
 
 //*************************************************************************************************************************
@@ -90,22 +119,8 @@ void GrafAppApp::draw()
 	
 	Matrix44f trans;
 	
-	//move camera back
-	trans.setToIdentity();
-	trans.translate(Vec3f(0,0,-100));
-	gl::multModelView(trans);
-	
-	//translate to origin.	
-	trans.setToIdentity();
-	trans.translate(Vec3f(getWindowWidth()*0.5f,0,0));
-	gl::multModelView(trans);
-	//rotate
-	gl::multModelView(m_Rotation);
-	//translate back
-	trans.setToIdentity();
-	trans.translate(Vec3f(-getWindowWidth()*0.5f,0,0));
-	gl::multModelView(trans);
-	
+	gl::setMatrices(m_Cam);
+	gl::rotate(mArcball.getQuat());	
 	
 	GLfloat light_position[] = { light_pos.x, light_pos.y, light_pos.z, true };
 	glLightfv(GL_LIGHT0, GL_POSITION, light_position);

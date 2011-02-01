@@ -1,7 +1,12 @@
+#include "cinder/app/App.h"
+
+#include <mmsystem.h>
+#include <limits>
 #include "GMLData.h"
 #include "cinder/Xml.h"
 #include "cinder/gl/gl.h"
 #include "cinder/TriMesh.h"
+#include "cinder/Filesystem.h"
 #include "cinder/Utilities.h"
 
 #include "Spline.h"
@@ -9,11 +14,11 @@
 using namespace ci;
 using namespace std;
 
-float GrafDrawingParams::g_RotationAmount	= 0.4;
-float GrafDrawingParams::g_ZExtrusion		= 0.2f;
+float GrafDrawingParams::g_RotationAmount	= 0.4f;
+float GrafDrawingParams::g_ZExtrusion		= 100.0f;
 float GrafDrawingParams::g_MaxSpeed			= 20;
 float GrafDrawingParams::g_MinSpeed			= 0.1f;
-float GrafDrawingParams::g_BrushSize		= 0.1f;
+float GrafDrawingParams::g_BrushSize		= 0.005f;
 float GrafDrawingParams::g_CircleSubdivs	= 8;
 float GrafDrawingParams::g_SplineSubdivs	= 2;
 
@@ -49,7 +54,7 @@ CGMLDataStroke::CGMLDataStroke(const XmlTree& stroke_xml)
 				t = stroke_point_elements_it->getValue<float>(0.0f);
 			}
 		}
-		
+
 		CGMLDataPoint stroke_data_point(x, y, z, t);
 		m_Points.push_back(stroke_data_point);
 	}	
@@ -106,8 +111,62 @@ void CGMLDataStroke::ComputeSpeeds()
 }
 
 //*******************************************************************************************************
+void CGMLDataStroke::Normalise()
+{
+	//we want all our points to lie in a unit cube.
+	//should we centre around 0,0,0? certainly makes the maths a bit easier generally.
+	//we probably also want to preserve the XY aspect ratio.
+	const static float ARBITRARILY_LARGE_FLOAT = 1000000.0f;
+	float min_x = ARBITRARILY_LARGE_FLOAT;
+	float min_y = ARBITRARILY_LARGE_FLOAT;
+	float min_z = ARBITRARILY_LARGE_FLOAT;
+	float max_x = -ARBITRARILY_LARGE_FLOAT;
+	float max_y = -ARBITRARILY_LARGE_FLOAT;
+	float max_z = -ARBITRARILY_LARGE_FLOAT;
+
+	for(TPointList::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
+	{
+		Vec3f p = it->m_Pos;
+		if(p.x > max_x) { max_x = p.x; }
+		if(p.x < min_x) { min_x = p.x; }
+
+		if(p.y > max_y) { max_y = p.y; } 
+		if(p.y < min_y) { min_y = p.y; }
+		
+		if(p.z > max_z) { max_z = p.z; } 
+		if(p.z < min_z) { min_z = p.z; }
+	}
+
+	float x_size = max_x - min_x;
+	float y_size = max_y - min_y;
+	float z_size = max_z - min_z;
+
+	float one_on_x_size = 1.0f / x_size;
+	float one_on_y_size = 1.0f / y_size;
+	float one_on_z_size = 1.0f / z_size;
+
+	Vec3f origin(min_x, min_y, min_z);
+	Vec3f mul(one_on_x_size, one_on_y_size, one_on_z_size);
+	Vec3f centre(-0.5f, -0.5f, -0.5f);
+
+	for(TPointList::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
+	{
+		it->m_Pos -= origin;
+		it->m_Pos *= mul;
+		it->m_Pos += centre;
+	}
+}
+
+//*******************************************************************************************************
 void CGMLDataStroke::ComputePTF()
 {
+	//      m[0] = Imath::firstFrame( p[0], p[1], p[2] );
+	//      for( int i = 1; i < n - 1; i++ )
+	//      {
+	//          m[i] = Imath::nextFrame( m[i-1], p[i-1], p[i], t[i-1], t[i] );
+	//      }
+	//      m[n-1] = Imath::lastFrame( m[n-2], p[n-2], p[n-1] );
+
 	int n = m_Points.size();
 	// Make sure we have at least 3 points because the first frame requires it
 	if( n >= 3 ) 
@@ -121,6 +180,10 @@ void CGMLDataStroke::ComputePTF()
 			Vec3f prevT = m_Points[i-1].m_Tangent;
 			Vec3f curT  = m_Points[i].m_Tangent;
 			m_Points[i].m_Frame = nextFrame(m_Points[i - 1].m_Frame, m_Points[i - 1].m_Pos, m_Points[i].m_Pos, prevT, curT);
+
+			Vec3f p = m_Points[i].m_Frame.getTranslation();
+			std::shared_ptr<cinder::msw::dostream> mOutputStream = shared_ptr<cinder::msw::dostream>( new cinder::msw::dostream );
+			*mOutputStream << p.x << ", " << p.y << "\n";
 		}
 		// Make the last frame
 		m_Points[n - 1].m_Frame = lastFrame(m_Points[n - 2].m_Frame, m_Points[n - 2].m_Pos, m_Points[n - 1].m_Pos);
@@ -136,6 +199,7 @@ CGMLData::CGMLData(std::string file_path)
 
 	for(TStrokeList::iterator it = m_Strokes.begin(); it != m_Strokes.end(); ++it)
 	{
+		it->Normalise();
 		it->ComputeSpeeds();
 		it->ComputePTF();
 	}
@@ -187,7 +251,7 @@ void CGMLData::Draw(float time)
 	
 	int curr_index = 0;
 
-	Vec3f scale_mul(800, 600, GrafDrawingParams::g_ZExtrusion);
+	//Vec3f scale_mul(800, 600, GrafDrawingParams::g_ZExtrusion);
 
 	for(int i=0; i<GetNumStrokes(); ++i)
 	{
@@ -204,23 +268,39 @@ void CGMLData::Draw(float time)
 
 		int num = points.size();
 
-		for(int i=0; i<num-1; ++i)
+		for(int i=0; i<num-2; ++i)
 		{
 			float age = time - p3->m_Time;
 			age *= 10.0f;
 			float age_mul = max(0.0f, min(age, 1.0f));
 			
 			Vec3f v0(0,0,0);
-			Vec3f v1(0,0,0);
-			v1 += Vec3f(0, 0.01, 0);
+			Vec3f v1(0.02f, 0, 0);
+			Vec3f v2(0, 0.02f, 0);
+			Vec3f v3(0, 0, 0.02f);
 			v0 = p2->m_Frame * v0;
 			v1 = p2->m_Frame * v1;
+			v2 = p2->m_Frame * v2;
+			v3 = p2->m_Frame * v3;
 			
-			v0 *= scale_mul;
-			v1 *= scale_mul;
+			//v0 *= scale_mul;
+			//v1 *= scale_mul;
+			//v2 *= scale_mul;
+			//v3 *= scale_mul;
 			
+
+			glColor3f(1, 0, 0);
 			gl::drawLine(v0, v1);
-			
+			glColor3f(0, 1, 0);
+			gl::drawLine(v0, v2);
+			glColor3f(0, 0, 1);
+			gl::drawLine(v0, v3);
+
+			//gl::drawCube(pos, Vec3f(1,1,1));
+			//gl::drawLine(pos, pos+p2->m_Tangent*10);
+
+			glColor3f(0, 0, 0);
+
 			int num_spline_subdivs = (int)GrafDrawingParams::g_SplineSubdivs;
 			for(int i=0; i<num_spline_subdivs; ++i)
 			{
@@ -231,8 +311,8 @@ void CGMLData::Draw(float time)
 				Spline::CatmullRom(start, t0, p1->m_Pos, p2->m_Pos, p3->m_Pos, p4->m_Pos);
 				Spline::CatmullRom(end, t1, p1->m_Pos, p2->m_Pos, p3->m_Pos, p4->m_Pos);
 				
-				start *= scale_mul;
-				end *= scale_mul;
+				//start *= scale_mul;
+				//end *= scale_mul;
 				
 				float start_width = t0 * p3->m_Speed + (1.0f-t0) * p4->m_Speed;
 				float end_width = t1 * p3->m_Speed + (1.0f-t1) * p4->m_Speed;
@@ -256,7 +336,7 @@ void CGMLData::Draw(float time)
 		}
 	}
 	
-	//gl::draw(tri_mesh);
+	gl::draw(tri_mesh);
 }
 
 //*******************************************************************************************************
