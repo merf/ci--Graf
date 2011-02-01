@@ -1,0 +1,65 @@
+<GML>
+    <tag>
+        <header>
+            <client>
+                <name>Graffiti Analysis 2.0</name>
+                <version>1.0</version>
+                <username>dustTag</username>
+                <keywords />
+                <uniqueKey />
+            </client>
+        </header>
+        <drawing>
+            <stroke>
+              <pt>
+                <x>0.0</x>
+                <y>0.0</y>
+                <z>0.0</z>
+                <time>0.000000</time>
+              </pt>
+              <pt>
+                <x>1.0</x>
+                <y>1.0</y>
+                <z>1.0</z>
+                <time>0.1</time>
+              </pt>
+              <pt>
+                <x>2.0</x>
+                <y>0.0</y>
+                <z>2.0</z>
+                <time>0.2</time>
+              </pt>
+              <pt>
+                <x>3.0</x>
+                <y>1.0</y>
+                <z>3.0</z>
+                <time>0.3</time>
+              </pt>
+              <pt>
+                <x>4.0</x>
+                <y>0.0</y>
+                <z>4.0</z>
+                <time>0.4</time>
+              </pt>
+              <pt>
+                <x>5.0</x>
+                <y>1.0</y>
+                <z>5.0</z>
+                <time>0.000005</time>
+              </pt>
+            </stroke>
+        </drawing>
+        <environment>
+            <offset>
+                <x>-21.000002</x>
+                <y>15.000000</y>
+                <z>1.440000</z>
+            </offset>
+            <rotation>
+                <x>0.000000</x>
+                <y>-28.000000</y>
+                <z>0.000000</z>
+            </rotation>
+        </environment>
+    </tag>
+</GML>

@@ -8,6 +8,7 @@
 #include "cinder/TriMesh.h"
 #include "cinder/Filesystem.h"
 #include "cinder/Utilities.h"
+#include "cinder/Quaternion.h"
 
 #include "Spline.h"
 
@@ -18,9 +19,9 @@ float GrafDrawingParams::g_RotationAmount	= 0.4f;
 float GrafDrawingParams::g_ZExtrusion		= 100.0f;
 float GrafDrawingParams::g_MaxSpeed			= 20;
 float GrafDrawingParams::g_MinSpeed			= 0.1f;
-float GrafDrawingParams::g_BrushSize		= 0.005f;
+float GrafDrawingParams::g_BrushSize		= 0.1f;
 float GrafDrawingParams::g_CircleSubdivs	= 8;
-float GrafDrawingParams::g_SplineSubdivs	= 2;
+float GrafDrawingParams::g_SplineSubdivs	= 4;
 
 
 //*******************************************************************************************************
@@ -71,24 +72,17 @@ void CGMLDataStroke::ComputeSpeeds()
 	{
 		if(!first)
 		{
-			float time = prev_time - it->m_Time;
+			float time = fabsf(it->m_Time - prev_time);
 			Vec3f dir = it->m_Pos - prev_point;
 			it->m_Speed = dir.length() / time;
 			if(it->m_Speed > max_speed)
 			{
 				max_speed = it->m_Speed;
 			}
-			
-			dir.normalize();
-			it->m_Tangent = dir;
 		}
 		else
 		{
 			it->m_Speed = 0.0f;
-			
-			Vec3f dir = m_Points[1].m_Pos - m_Points[0].m_Pos;
-			dir.normalize();
-			it->m_Tangent = dir;
 		}
 
 		prev_point = it->m_Pos;
@@ -107,6 +101,31 @@ void CGMLDataStroke::ComputeSpeeds()
 		{
 			it->m_Speed *= one_on_max_speed;
 		}
+	}
+}
+
+//*******************************************************************************************************
+void CGMLDataStroke::ComputeTangents()
+{
+	int i0 = 0;
+	int i1 = 0;
+	int i2 = 1;
+	int i3 = 2;
+	for(int i=0; i<m_Points.size()-2; ++i)
+	{
+		Vec3f p1, p2;
+		
+		Spline::CatmullRom(p1, 0.0f, m_Points[i0].m_Pos, m_Points[i1].m_Pos, m_Points[i2].m_Pos, m_Points[i3].m_Pos);
+		Spline::CatmullRom(p2, 0.001f, m_Points[i0].m_Pos, m_Points[i1].m_Pos, m_Points[i2].m_Pos, m_Points[i3].m_Pos);
+
+		Vec3f t = p2 - p1;
+		t.normalize();
+		m_Points[i].m_Tangent = t;
+
+		i0 = i1;
+		i1 = i2;
+		i2 = i3;
+		++i3;
 	}
 }
 
@@ -201,6 +220,7 @@ CGMLData::CGMLData(std::string file_path)
 	{
 		it->Normalise();
 		it->ComputeSpeeds();
+		it->ComputeTangents();
 		it->ComputePTF();
 	}
 }
@@ -278,26 +298,37 @@ void CGMLData::Draw(float time)
 			Vec3f v1(0.02f, 0, 0);
 			Vec3f v2(0, 0.02f, 0);
 			Vec3f v3(0, 0, 0.02f);
-			v0 = p2->m_Frame * v0;
-			v1 = p2->m_Frame * v1;
-			v2 = p2->m_Frame * v2;
-			v3 = p2->m_Frame * v3;
+			//v0 = p2->m_Frame * v0;
+			//v1 = p2->m_Frame * v1;
+			//v2 = p2->m_Frame * v2;
+			//v3 = p2->m_Frame * v3;
 			
 			//v0 *= scale_mul;
 			//v1 *= scale_mul;
 			//v2 *= scale_mul;
 			//v3 *= scale_mul;
-			
 
-			glColor3f(1, 0, 0);
-			gl::drawLine(v0, v1);
+			Quatf new_ori(p3->m_Frame);
+			new_ori.normalize();
+			Quatf old_ori(p2->m_Frame);
+			old_ori.normalize();
+
+			v0 = p3->m_Pos;
+			v1 = new_ori*Vec3f(0.02f, 0, 0) + p3->m_Pos;
+			v2 = new_ori*Vec3f(0, 0.02f, 0) + p3->m_Pos;
+			v3 = new_ori*Vec3f(0, 0, 0.02f) + p3->m_Pos;
+
+			//glColor3f(1, 0, 0);
+			//gl::drawLine(v0, v1);
+			//glColor3f(0, 1, 0);
+			//gl::drawLine(v0, v2);
+			//glColor3f(0, 0, 1);
+			//gl::drawLine(v0, v3);
+
+			Vec3f pos = p2->m_Pos;
+			gl::drawCube(pos, Vec3f(1,1,1)*0.01f);
 			glColor3f(0, 1, 0);
-			gl::drawLine(v0, v2);
-			glColor3f(0, 0, 1);
-			gl::drawLine(v0, v3);
-
-			//gl::drawCube(pos, Vec3f(1,1,1));
-			//gl::drawLine(pos, pos+p2->m_Tangent*10);
+			gl::drawLine(pos, pos+p2->m_Tangent*0.05f);
 
 			glColor3f(0, 0, 0);
 
@@ -325,8 +356,11 @@ void CGMLData::Draw(float time)
 				
 				start_width *= age_mul;
 				end_width *= age_mul;
+
+				Quatf start_ori = old_ori.slerpShortestUnenforced(t0, new_ori);
+				Quatf end_ori = old_ori.slerpShortestUnenforced(t1, new_ori);
 				
-				DrawSegment(tri_mesh, start, start_width, end, end_width, curr_index);
+				DrawSegment(tri_mesh, start, start_width, start_ori, end, end_width, end_ori, curr_index);
 			}
 
 			p1 = p2;
@@ -340,27 +374,27 @@ void CGMLData::Draw(float time)
 }
 
 //*******************************************************************************************************
-void CGMLData::DrawSegment(TriMesh& tri_mesh, const Vec3f& p1, float w1, const Vec3f& p2, float w2, int& curr_index)
+void CGMLData::DrawSegment(TriMesh& tri_mesh, const Vec3f& p1, float w1, Quatf& q1, const Vec3f& p2, float w2, Quatf& q2, int& curr_index)
 {
 	int num_subdivs = (int)GrafDrawingParams::g_CircleSubdivs;
 	float angle_inc = (float)M_PI * 2.0f / (float) num_subdivs;
 
-	//gl::drawLine(p1, p2);
+	gl::drawLine(p1, p2);
 
 	for(int i=0; i<num_subdivs; ++i)
 	{
 		float angle_1 = i*angle_inc;
 		float angle_2 = (i+1)*angle_inc;
 
-		Vec3f offset_1(0, cos(angle_1), -sin(angle_1));
-		Vec3f offset_2(0, cos(angle_2), -sin(angle_2));
+		Vec3f offset_1 = q1 * Vec3f(0, cos(angle_1), -sin(angle_1));
+		Vec3f offset_2 = q2 * Vec3f(0, cos(angle_2), -sin(angle_2));
 		
 		Vec3f v1 = p1 + offset_1 * w1;
 		Vec3f v2 = p2 + offset_1 * w2;
 		Vec3f v3 = p1 + offset_2 * w1;
 		Vec3f v4 = p2 + offset_2 * w2;
 
-		//gl::drawLine(v1, v3);
+		gl::drawLine(v1, v3);
 		
 		tri_mesh.appendVertex(v1);
 		tri_mesh.appendVertex(v2);

@@ -46,7 +46,7 @@ void GrafAppApp::setup()
 	mArcball.setWindowSize( getWindowSize() );
 	mArcball.setCenter( getWindowCenter() );
 	mArcball.setRadius( 150 );
-	mArcball.setConstraintAxis(Vec3f(0,1,0));
+	//mArcball.setConstraintAxis(Vec3f(0.1,1,0));
 
 
 	gl::enableDepthWrite();

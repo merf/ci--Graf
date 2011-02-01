@@ -1,5 +1,6 @@
 #pragma once
 #include "cinder/Vector.h"
+#include "cinder/Quaternion.h"
 #include "cinder/Xml.h"
 #include "cinder/TriMesh.h"
 #include <list>
@@ -42,6 +43,7 @@ public:
 
 	const TPointList&					GetData() const { return m_Points; }
 	void								ComputeSpeeds();
+	void								ComputeTangents();
 	void								ComputePTF();
 	void								Normalise();
 
@@ -64,7 +66,7 @@ private:
 	int									GetNumStrokes() const { return m_Strokes.size(); }	
 	const CGMLDataStroke::TPointList&	GetStrokeData(int i) const { return m_Strokes[i].GetData(); }
 
-	void								DrawSegment(ci::TriMesh& tri_mesh, const ci::Vec3f& p1, float w1, const ci::Vec3f& p2, float w2, int& curr_index);
+	void								DrawSegment(ci::TriMesh& tri_mesh, const ci::Vec3f& p1, float w1, ci::Quatf& q1, const ci::Vec3f& p2, float w2, ci::Quatf& q2, int& curr_index);
 
 	std::string							m_Artist;
 	typedef std::vector<CGMLDataStroke> TStrokeList;
