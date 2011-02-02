@@ -16,7 +16,7 @@ using namespace std;
 //*************************************************************************************************************************
 //*************************************************************************************************************************
 CTagCollection::CTagCollection() 
-: m_Timer(0), 
+: 
 m_CurrTag(0) 
 { 
 	Reset(); 
@@ -26,12 +26,16 @@ m_CurrTag(0)
 //*************************************************************************************************************************
 void CTagCollection::Reset() 
 { 
-	m_Timer = 0; 
 	m_CurrTag++; 
 	if(m_CurrTag >= m_TagData.size()) 
 	{ 
 		m_CurrTag = 0; 
-	} 
+	}
+
+	if(m_CurrTag < m_TagData.size())
+	{
+		m_TagData[m_CurrTag].Reset();
+	}
 }
 
 //*************************************************************************************************************************
@@ -47,20 +51,26 @@ void CTagCollection::ReadTagData()
 				//console() << "   " << it->path().filename() << " size(bytes): " << fs::file_size( *it ) << std::endl;
 				fs::path file = it->path();
 				std::string str = file.string();
-				m_TagData.push_back(CGMLData(str));
+				m_TagData.push_back(CTag(str));
 			}
 		}
 	}
 }
 
 //*************************************************************************************************************************
-const CGMLData& CTagCollection::GetCurrTag()
+const CTag& CTagCollection::GetCurrTag()
 { 
 	return m_TagData[m_CurrTag]; 
 }
 
 //*************************************************************************************************************************
+void CTagCollection::Update()
+{ 
+	m_TagData[m_CurrTag].Update();
+}
+
+//*************************************************************************************************************************
 void CTagCollection::Draw()
 { 
-	m_TagData[m_CurrTag].Draw(m_Timer); 
+	m_TagData[m_CurrTag].Draw(); 
 }

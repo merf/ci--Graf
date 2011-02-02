@@ -19,14 +19,14 @@ float GrafDrawingParams::g_RotationAmount	= 0.4f;
 float GrafDrawingParams::g_ZExtrusion		= 100.0f;
 float GrafDrawingParams::g_MaxSpeed			= 20;
 float GrafDrawingParams::g_MinSpeed			= 0.1f;
-float GrafDrawingParams::g_BrushSize		= 0.1f;
-float GrafDrawingParams::g_CircleSubdivs	= 3;
-float GrafDrawingParams::g_SplineSubdivs	= 10;
+float GrafDrawingParams::g_BrushSize		= 0.01f;
+float GrafDrawingParams::g_CircleSubdivs	= 8;
+float GrafDrawingParams::g_SplineSubdivs	= 5;
 
 
 //*******************************************************************************************************
 //*******************************************************************************************************
-CGMLDataStroke::CGMLDataStroke(const XmlTree& stroke_xml)
+CTagStroke::CTagStroke(const XmlTree& stroke_xml)
 {
 	for(XmlTree::ConstIter stroke_point = stroke_xml.begin(); stroke_point != stroke_xml.end(); ++stroke_point)
 	{
@@ -56,7 +56,7 @@ CGMLDataStroke::CGMLDataStroke(const XmlTree& stroke_xml)
 			}
 		}
 
-		CGMLDataPoint stroke_data_point(x, y, z, t);
+		CTagPoint stroke_data_point(x, y, z, t);
 		m_Points.push_back(stroke_data_point);
 	}
 
@@ -72,83 +72,94 @@ CGMLDataStroke::CGMLDataStroke(const XmlTree& stroke_xml)
 		for(int i=0; i<num_pts; ++i)
 		{
 			Vec3f p1 = Vec3f(cosf(circle_inc*i), -sinf(circle_inc*i), (float)i) * width;
-			m_Points.push_back(CGMLDataPoint(p1.x, p1.y, (float)i, (float)i));
+			m_Points.push_back(CTagPoint(p1.x, p1.y, (float)i, (float)i));
 			width *= 1.1f;
 		}
 	}
 }
 
+
 //*******************************************************************************************************
-void CGMLDataStroke::ComputeSpeeds()
+void CTagStroke::Reset()
+{
+	for(TPointList::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
+	{
+		it->Reset();
+	}
+}
+
+//*******************************************************************************************************
+void CTagStroke::ComputeWidths()
 {
 	bool first = true;
 	Vec3f prev_point;
 	float prev_time = 0;
-	float max_speed = 0.0f;
+	float max_width = 0.0f;
 	for(TPointList::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 	{
 		if(!first)
 		{
-			float time = fabsf(it->m_Time - prev_time);
-			Vec3f dir = it->m_Pos - prev_point;
-			it->m_Speed = dir.length() / time;
-			if(it->m_Speed > max_speed)
+			//TODO - this is a rubbish way to calculate speed since corners will give large
+			//values, better to use the spline.
+			float time = fabsf(it->GetTime() - prev_time);
+			Vec3f dir = it->GetPos() - prev_point;
+			it->SetDesiredWidth(dir.length() / time);
+			if(it->GetWidth() > max_width)
 			{
-				max_speed = it->m_Speed;
+				max_width = it->GetWidth();
 			}
 		}
 		else
 		{
-			it->m_Speed = 0.0f;
+			it->SetDesiredWidth(0.0f);
 		}
 
-		prev_point = it->m_Pos;
-		prev_time = it->m_Time;
+		prev_point = it->GetPos();
+		prev_time = it->GetTime();
 
 		first = false;
 	}
 	
-	TPointList::reverse_iterator rit = m_Points.rbegin();
-	rit->m_Speed = 0;
+	m_Points[m_Points.size()-1].SetDesiredWidth(0);
 
-	if(max_speed > 0)
+	if(max_width > 0)
 	{
-		float one_on_max_speed = 1.0f / max_speed;
+		float one_on_max_width = 1.0f / max_width;
 		for(TPointList::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 		{
-			it->m_Speed *= one_on_max_speed;
+			it->SetDesiredWidth(it->GetWidth() * one_on_max_width);
 		}
 	}
 }
 
+////*******************************************************************************************************
+//void CGMLDataStroke::ComputeTangents()
+//{
+//	u32 i0 = 0;
+//	u32 i1 = 0;
+//	u32 i2 = 1;
+//	u32 i3 = 2;
+//
+//	for(u32 i=0; i<m_Points.size()-2; ++i)
+//	{
+//		Vec3f p1, p2;
+//		
+//		Spline::CatmullRom(p1, 0.0f, m_Points[i0].GetPos(), m_Points[i1].GetPos(), m_Points[i2].GetPos(), m_Points[i3].GetPos());
+//		Spline::CatmullRom(p2, 0.001f, m_Points[i0].GetPos(), m_Points[i1].GetPos(), m_Points[i2].GetPos(), m_Points[i3].GetPos());
+//
+//		Vec3f t = p2 - p1;
+//		t.normalize();
+//		m_Points[i].SetTangent(t);
+//
+//		i0 = i1;
+//		i1 = i2;
+//		i2 = i3;
+//		++i3;
+//	}
+//}
+
 //*******************************************************************************************************
-void CGMLDataStroke::ComputeTangents()
-{
-	u32 i0 = 0;
-	u32 i1 = 0;
-	u32 i2 = 1;
-	u32 i3 = 2;
-
-	for(u32 i=0; i<m_Points.size()-2; ++i)
-	{
-		Vec3f p1, p2;
-		
-		Spline::CatmullRom(p1, 0.0f, m_Points[i0].m_Pos, m_Points[i1].m_Pos, m_Points[i2].m_Pos, m_Points[i3].m_Pos);
-		Spline::CatmullRom(p2, 0.001f, m_Points[i0].m_Pos, m_Points[i1].m_Pos, m_Points[i2].m_Pos, m_Points[i3].m_Pos);
-
-		Vec3f t = p2 - p1;
-		t.normalize();
-		m_Points[i].m_Tangent = t;
-
-		i0 = i1;
-		i1 = i2;
-		i2 = i3;
-		++i3;
-	}
-}
-
-//*******************************************************************************************************
-void CGMLDataStroke::Normalise()
+void CTagStroke::Normalise()
 {
 	//we want all our points to lie in a unit cube.
 	//should we centre around 0,0,0? certainly makes the maths a bit easier generally.
@@ -163,7 +174,7 @@ void CGMLDataStroke::Normalise()
 
 	for(TPointList::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 	{
-		Vec3f p = it->m_Pos;
+		Vec3f p = it->GetPos();
 		if(p.x > max_x) { max_x = p.x; }
 		if(p.x < min_x) { min_x = p.x; }
 
@@ -188,48 +199,59 @@ void CGMLDataStroke::Normalise()
 
 	for(TPointList::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 	{
-		it->m_Pos -= origin;
-		it->m_Pos *= mul;
-		it->m_Pos += centre;
+		Vec3f pos = it->GetPos();
+		pos -= origin;
+		pos *= mul;
+		pos += centre;
+		it->SetPos(pos);
 	}
 }
 
 //*******************************************************************************************************
-void CGMLDataStroke::ComputePTF()
+void CTagStroke::Update()
 {
-	//      m[0] = Imath::firstFrame( p[0], p[1], p[2] );
-	//      for( int i = 1; i < n - 1; i++ )
-	//      {
-	//          m[i] = Imath::nextFrame( m[i-1], p[i-1], p[i], t[i-1], t[i] );
-	//      }
-	//      m[n-1] = Imath::lastFrame( m[n-2], p[n-2], p[n-1] );
-
-	int n = m_Points.size();
-	// Make sure we have at least 3 points because the first frame requires it
-	if( n >= 3 ) 
+	for(TPointList::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 	{
-		// Make the parallel transport frame
-		m_Points[0].m_Frame = firstFrame(m_Points[0].m_Pos, m_Points[1].m_Pos,  m_Points[2].m_Pos);
-		
-		// Make the remaining frames - saving the last
-		for(int i = 1; i < n - 1; ++i ) 
-		{
-			Vec3f prevT = m_Points[i-1].m_Tangent;
-			Vec3f curT  = m_Points[i].m_Tangent;
-			m_Points[i].m_Frame = nextFrame(m_Points[i - 1].m_Frame, m_Points[i - 1].m_Pos, m_Points[i].m_Pos, prevT, curT);
-
-			Vec3f p = m_Points[i].m_Frame.getTranslation();
-			std::shared_ptr<cinder::msw::dostream> mOutputStream = shared_ptr<cinder::msw::dostream>( new cinder::msw::dostream );
-			*mOutputStream << p.x << ", " << p.y << "\n";
-		}
-		// Make the last frame
-		m_Points[n - 1].m_Frame = lastFrame(m_Points[n - 2].m_Frame, m_Points[n - 2].m_Pos, m_Points[n - 1].m_Pos);
+		it->Update();
 	}
 }
 
+////*******************************************************************************************************
+//void CGMLDataStroke::ComputePTF()
+//{
+//	//      m[0] = Imath::firstFrame( p[0], p[1], p[2] );
+//	//      for( int i = 1; i < n - 1; i++ )
+//	//      {
+//	//          m[i] = Imath::nextFrame( m[i-1], p[i-1], p[i], t[i-1], t[i] );
+//	//      }
+//	//      m[n-1] = Imath::lastFrame( m[n-2], p[n-2], p[n-1] );
+//
+//	int n = m_Points.size();
+//	// Make sure we have at least 3 points because the first frame requires it
+//	if( n >= 3 ) 
+//	{
+//		// Make the parallel transport frame
+//		m_Points[0].m_Frame = firstFrame(m_Points[0].GetPos(), m_Points[1].GetPos(),  m_Points[2].GetPos());
+//		
+//		// Make the remaining frames - saving the last
+//		for(int i = 1; i < n - 1; ++i ) 
+//		{
+//			Vec3f prevT = m_Points[i-1].m_Tangent;
+//			Vec3f curT  = m_Points[i].m_Tangent;
+//			m_Points[i].m_Frame = nextFrame(m_Points[i - 1].m_Frame, m_Points[i - 1].GetPos(), m_Points[i].GetPos(), prevT, curT);
+//
+//			Vec3f p = m_Points[i].m_Frame.getTranslation();
+//			std::shared_ptr<cinder::msw::dostream> mOutputStream = shared_ptr<cinder::msw::dostream>( new cinder::msw::dostream );
+//			*mOutputStream << p.x << ", " << p.y << "\n";
+//		}
+//		// Make the last frame
+//		m_Points[n - 1].m_Frame = lastFrame(m_Points[n - 2].m_Frame, m_Points[n - 2].GetPos(), m_Points[n - 1].GetPos());
+//	}
+//}
+
 //*******************************************************************************************************
 //*******************************************************************************************************
-CGMLData::CGMLData(std::string file_path)
+CTag::CTag(std::string file_path)
 {
 	XmlTree doc(loadFile(file_path));
 	ParseXML(doc);
@@ -237,14 +259,23 @@ CGMLData::CGMLData(std::string file_path)
 	for(TStrokeList::iterator it = m_Strokes.begin(); it != m_Strokes.end(); ++it)
 	{
 		it->Normalise();
-		it->ComputeSpeeds();
-		it->ComputeTangents();
-		it->ComputePTF();
+		it->ComputeWidths();
+		//it->ComputeTangents();
+		//it->ComputePTF();
 	}
 }
 
 //*******************************************************************************************************
-void CGMLData::ParseXML(XmlTree& xml_tree)
+void CTag::Reset()
+{
+	for(TStrokeList::iterator it = m_Strokes.begin(); it != m_Strokes.end(); ++it)
+	{
+		it->Reset();
+	}
+}
+
+//*******************************************************************************************************
+void CTag::ParseXML(XmlTree& xml_tree)
 {
 	if(xml_tree.begin()->getTag() == "GML")
 	{
@@ -268,7 +299,7 @@ void CGMLData::ParseXML(XmlTree& xml_tree)
 					const std::list<XmlTree>& strokes = item->getChildren();
 					for(std::list<XmlTree>::const_iterator stroke_it = strokes.begin(); stroke_it != strokes.end(); ++stroke_it)
 					{
-						CGMLDataStroke stroke_data(*stroke_it);
+						CTagStroke stroke_data(*stroke_it);
 						
 						
 						m_Strokes.push_back(stroke_data);
@@ -280,15 +311,24 @@ void CGMLData::ParseXML(XmlTree& xml_tree)
 }
 
 //*******************************************************************************************************
-void CGMLData::Draw(float time)
+void CTag::Update()
 {
-	gl::enableWireframe();
+	for(u32 i_stroke=0; i_stroke<m_Strokes.size(); ++i_stroke)
+	{
+		m_Strokes[i_stroke].Update();
+	}
+}
+
+//*******************************************************************************************************
+void CTag::Draw()
+{
+	//gl::enableWireframe();
 
 	ci::TriMesh tri_mesh;
 
 	for(u32 i_stroke=0; i_stroke<m_Strokes.size(); ++i_stroke)
 	{
-		const CGMLDataStroke::TPointList& points = m_Strokes[i_stroke].GetData();
+		const CTagStroke::TPointList& points = m_Strokes[i_stroke].GetData();
 
 		u32 curr_index = 0;
 
@@ -301,10 +341,10 @@ void CGMLData::Draw(float time)
 		for(u32 i_point=0; i_point<num-1; ++i_point)
 		{
 			//retrieve control points.
-			Vec3f v1 = points[p1].m_Pos;
-			Vec3f v2 = points[p2].m_Pos;
-			Vec3f v3 = points[p3].m_Pos;
-			Vec3f v4 = points[p4].m_Pos;
+			Vec3f v1 = points[p1].GetPos();
+			Vec3f v2 = points[p2].GetPos();
+			Vec3f v3 = points[p3].GetPos();
+			Vec3f v4 = points[p4].GetPos();
 
 			//subdivide spline.
 			int num_spline_subdivs = (int)GrafDrawingParams::g_SplineSubdivs;
@@ -319,8 +359,8 @@ void CGMLData::Draw(float time)
 
 				float start_width, end_width;
 				
-				Spline::CatmullRom(start_width, t0, points[p1].m_Speed, points[p2].m_Speed, points[p3].m_Speed, points[p4].m_Speed);
-				Spline::CatmullRom(end_width, t1, points[p1].m_Speed, points[p2].m_Speed, points[p3].m_Speed, points[p4].m_Speed);
+				Spline::CatmullRom(start_width, t0, points[p1].GetWidth(), points[p2].GetWidth(), points[p3].GetWidth(), points[p4].GetWidth());
+				Spline::CatmullRom(end_width, t1, points[p1].GetWidth(), points[p2].GetWidth(), points[p3].GetWidth(), points[p4].GetWidth());
 
 				start_width *= GrafDrawingParams::g_BrushSize;
 				end_width *= GrafDrawingParams::g_BrushSize;
@@ -365,6 +405,11 @@ void CGMLData::Draw(float time)
 			{
 				p4 = num - 1;
 			}
+
+			if(!points[p3].IsActive())
+			{
+				break;
+			}
 		}
 	}
 
@@ -372,7 +417,7 @@ void CGMLData::Draw(float time)
 }
 
 //*******************************************************************************************************
-void CGMLData::AddSegmentVertices(ci::TriMesh& tri_mesh, const ci::Vec3f& point, float width, ci::Quatf& orientation, u32 subdivs, u32& curr_index)
+void CTag::AddSegmentVertices(ci::TriMesh& tri_mesh, const ci::Vec3f& point, float width, ci::Quatf& orientation, u32 subdivs, u32& curr_index)
 {
 	float angle_inc = (float)M_PI * 2.0f / (float) subdivs;
 
@@ -383,11 +428,13 @@ void CGMLData::AddSegmentVertices(ci::TriMesh& tri_mesh, const ci::Vec3f& point,
 		Vec3f final_point = point + orientation * offset * width;
 
 		tri_mesh.appendVertex(final_point);
+		//float f = i / (float)subdivs;
+		//tri_mesh.appendColorRGB(Color(f, 0, 1-f));
 	}
 }
 
 //*******************************************************************************************************
-void CGMLData::AddSegmentVerticesAndIndices(ci::TriMesh& tri_mesh, const ci::Vec3f& point, float width, ci::Quatf& orientation, u32 subdivs, u32& curr_index)
+void CTag::AddSegmentVerticesAndIndices(ci::TriMesh& tri_mesh, const ci::Vec3f& point, float width, ci::Quatf& orientation, u32 subdivs, u32& curr_index)
 {
 	AddSegmentVertices(tri_mesh, point, width, orientation, subdivs, curr_index);
 

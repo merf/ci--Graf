@@ -14,13 +14,11 @@ public:
 	void					Reset();
 	void					ReadTagData();
 	
-	void					Update(float update_time) { m_Timer += update_time; }
+	void					Update();
 	void					Draw();
-	const CGMLData&			GetCurrTag();
-	float					GetTimer() { return m_Timer; }
+	const CTag&			GetCurrTag();
 	
 private:
-	float					m_Timer;
 	unsigned int			m_CurrTag;
-	std::vector<CGMLData>	m_TagData;	
+	std::vector<CTag>	m_TagData;	
 };

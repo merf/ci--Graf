@@ -203,6 +203,18 @@
 				RelativePath="..\src\TagCollection.h"
 				>
 			</File>
+			<File
+				RelativePath="..\src\TagPoint.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\TagPoint.h"
+				>
+			</File>
+			<File
+				RelativePath="..\src\types.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

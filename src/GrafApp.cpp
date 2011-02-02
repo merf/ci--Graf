@@ -21,7 +21,8 @@ class GrafAppApp : public AppBasic
 {
 public:
 	void setup();
-	void mouseDown(MouseEvent event);	
+	void keyDown(KeyEvent event);
+	void mouseDown(MouseEvent event);
 	void mouseDrag(MouseEvent event);
 	void resize(ResizeEvent event);
 	void update();
@@ -91,6 +92,12 @@ void GrafAppApp::mouseDrag(MouseEvent event)
 }
 
 //*************************************************************************************************************************
+void GrafAppApp::keyDown(KeyEvent event)
+{
+	m_TagCollection.Reset();
+}
+
+//*************************************************************************************************************************
 void GrafAppApp::resize(ResizeEvent event)
 {
 	m_Cam.setPerspective(60, getWindowAspectRatio(), 1, 1000);
@@ -100,7 +107,7 @@ void GrafAppApp::resize(ResizeEvent event)
 //*************************************************************************************************************************
 void GrafAppApp::update()
 {
-	m_TagCollection.Update(1.0f/getFrameRate());
+	m_TagCollection.Update();
 	
 	m_Rotation.setToIdentity();
 	m_Rotation.rotate(Vec3f(0, 1, 0), GrafDrawingParams::g_RotationAmount);
