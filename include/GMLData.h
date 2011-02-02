@@ -5,6 +5,7 @@
 #include "cinder/TriMesh.h"
 #include <list>
 
+typedef unsigned int u32;
 
 //---------------------------------------------------------------------------------------------------------
 struct GrafDrawingParams
@@ -18,6 +19,16 @@ struct GrafDrawingParams
 	static float g_BrushSize;
 	static float g_SplineSubdivs;
 	static float g_CircleSubdivs;
+};
+
+//We want to be able to specify different ways that points can come into/outof existence
+//inflating/deflating, bouncing, moving into place, drifting away
+//We want a nice mmethod for achieving this where we can just plug in these transitioner
+//components and they update the points properties.
+class CWidthUpdaterComponent
+{
+public:
+//	CWidthUpdaterComponent(CGMLDataPoint* p_parent) {}
 };
 
 //---------------------------------------------------------------------------------------------------------
@@ -47,6 +58,8 @@ public:
 	void								ComputePTF();
 	void								Normalise();
 
+	void								Clear() { m_Points.clear(); }
+
 private:
 	TPointList							m_Points;
 };
@@ -66,7 +79,11 @@ private:
 	int									GetNumStrokes() const { return m_Strokes.size(); }	
 	const CGMLDataStroke::TPointList&	GetStrokeData(int i) const { return m_Strokes[i].GetData(); }
 
-	void								DrawSegment(ci::TriMesh& tri_mesh, const ci::Vec3f& p1, float w1, ci::Quatf& q1, const ci::Vec3f& p2, float w2, ci::Quatf& q2, int& curr_index);
+	void								DrawSegment(ci::TriMesh& tri_mesh, const ci::Vec3f& p1, float w1, ci::Quatf& q1, const ci::Vec3f& p2, float w2, ci::Quatf& q2, u32& curr_index);
+
+	//TODO - could pass in a profile to draw along the curve rather than assuming a circle.
+	void								AddSegmentVertices(ci::TriMesh& tri_mesh, const ci::Vec3f& point, float width, ci::Quatf& orientation, u32 subdivs, u32& curr_index);
+	void								AddSegmentVerticesAndIndices(ci::TriMesh& tri_mesh, const ci::Vec3f& point, float width, ci::Quatf& orientation, u32 subdivs, u32& curr_index);
 
 	std::string							m_Artist;
 	typedef std::vector<CGMLDataStroke> TStrokeList;

@@ -20,8 +20,8 @@ float GrafDrawingParams::g_ZExtrusion		= 100.0f;
 float GrafDrawingParams::g_MaxSpeed			= 20;
 float GrafDrawingParams::g_MinSpeed			= 0.1f;
 float GrafDrawingParams::g_BrushSize		= 0.1f;
-float GrafDrawingParams::g_CircleSubdivs	= 8;
-float GrafDrawingParams::g_SplineSubdivs	= 4;
+float GrafDrawingParams::g_CircleSubdivs	= 3;
+float GrafDrawingParams::g_SplineSubdivs	= 10;
 
 
 //*******************************************************************************************************
@@ -58,7 +58,24 @@ CGMLDataStroke::CGMLDataStroke(const XmlTree& stroke_xml)
 
 		CGMLDataPoint stroke_data_point(x, y, z, t);
 		m_Points.push_back(stroke_data_point);
-	}	
+	}
+
+	bool replace_with_debug_points = false;
+	if(replace_with_debug_points)
+	{
+		m_Points.clear();
+
+		float width = 1.0f;
+		int num_pts = 15;
+		float cirlce_res = 5;
+		float circle_inc = (float)M_PI * 2.0f / (float)cirlce_res;
+		for(int i=0; i<num_pts; ++i)
+		{
+			Vec3f p1 = Vec3f(cosf(circle_inc*i), -sinf(circle_inc*i), (float)i) * width;
+			m_Points.push_back(CGMLDataPoint(p1.x, p1.y, (float)i, (float)i));
+			width *= 1.1f;
+		}
+	}
 }
 
 //*******************************************************************************************************
@@ -107,11 +124,12 @@ void CGMLDataStroke::ComputeSpeeds()
 //*******************************************************************************************************
 void CGMLDataStroke::ComputeTangents()
 {
-	int i0 = 0;
-	int i1 = 0;
-	int i2 = 1;
-	int i3 = 2;
-	for(int i=0; i<m_Points.size()-2; ++i)
+	u32 i0 = 0;
+	u32 i1 = 0;
+	u32 i2 = 1;
+	u32 i3 = 2;
+
+	for(u32 i=0; i<m_Points.size()-2; ++i)
 	{
 		Vec3f p1, p2;
 		
@@ -265,186 +283,120 @@ void CGMLData::ParseXML(XmlTree& xml_tree)
 void CGMLData::Draw(float time)
 {
 	gl::enableWireframe();
-	
+
 	ci::TriMesh tri_mesh;
-	tri_mesh.clear();
-	
-	int curr_index = 0;
 
-	//Vec3f scale_mul(800, 600, GrafDrawingParams::g_ZExtrusion);
-
-	for(int i=0; i<GetNumStrokes(); ++i)
+	for(u32 i_stroke=0; i_stroke<m_Strokes.size(); ++i_stroke)
 	{
-		const CGMLDataStroke::TPointList& points = GetStrokeData(i);
-		
-		CGMLDataStroke::TPointList::const_iterator point_it = points.begin();
+		const CGMLDataStroke::TPointList& points = m_Strokes[i_stroke].GetData();
 
-		CGMLDataStroke::TPointList::const_iterator p1 = point_it;
-		CGMLDataStroke::TPointList::const_iterator p2 = point_it;
-		++point_it;
-		CGMLDataStroke::TPointList::const_iterator p3 = point_it;
-		++point_it;
-		CGMLDataStroke::TPointList::const_iterator p4 = point_it;
+		u32 curr_index = 0;
 
-		int num = points.size();
+		u32 p1 = 0;
+		u32 p2 = 0;
+		u32 p3 = 1;
+		u32 p4 = 2;
 
-		for(int i=0; i<num-2; ++i)
+		u32 num = points.size();
+		for(u32 i_point=0; i_point<num-1; ++i_point)
 		{
-			float age = time - p3->m_Time;
-			age *= 10.0f;
-			float age_mul = max(0.0f, min(age, 1.0f));
-			
-			Vec3f v0(0,0,0);
-			Vec3f v1(0.02f, 0, 0);
-			Vec3f v2(0, 0.02f, 0);
-			Vec3f v3(0, 0, 0.02f);
-			//v0 = p2->m_Frame * v0;
-			//v1 = p2->m_Frame * v1;
-			//v2 = p2->m_Frame * v2;
-			//v3 = p2->m_Frame * v3;
-			
-			//v0 *= scale_mul;
-			//v1 *= scale_mul;
-			//v2 *= scale_mul;
-			//v3 *= scale_mul;
+			//retrieve control points.
+			Vec3f v1 = points[p1].m_Pos;
+			Vec3f v2 = points[p2].m_Pos;
+			Vec3f v3 = points[p3].m_Pos;
+			Vec3f v4 = points[p4].m_Pos;
 
-			Quatf new_ori(p3->m_Frame);
-			new_ori.normalize();
-			Quatf old_ori(p2->m_Frame);
-			old_ori.normalize();
-
-			v0 = p3->m_Pos;
-			v1 = new_ori*Vec3f(0.02f, 0, 0) + p3->m_Pos;
-			v2 = new_ori*Vec3f(0, 0.02f, 0) + p3->m_Pos;
-			v3 = new_ori*Vec3f(0, 0, 0.02f) + p3->m_Pos;
-
-			//glColor3f(1, 0, 0);
-			//gl::drawLine(v0, v1);
-			//glColor3f(0, 1, 0);
-			//gl::drawLine(v0, v2);
-			//glColor3f(0, 0, 1);
-			//gl::drawLine(v0, v3);
-
-			Vec3f pos = p2->m_Pos;
-			gl::drawCube(pos, Vec3f(1,1,1)*0.01f);
-			glColor3f(0, 1, 0);
-			gl::drawLine(pos, pos+p2->m_Tangent*0.05f);
-
-			glColor3f(0, 0, 0);
-
+			//subdivide spline.
 			int num_spline_subdivs = (int)GrafDrawingParams::g_SplineSubdivs;
 			for(int i=0; i<num_spline_subdivs; ++i)
 			{
 				float t0 = i/(float)num_spline_subdivs;
 				float t1 = (i+1)/(float)num_spline_subdivs;
-				
+
 				Vec3f start, end;
-				Spline::CatmullRom(start, t0, p1->m_Pos, p2->m_Pos, p3->m_Pos, p4->m_Pos);
-				Spline::CatmullRom(end, t1, p1->m_Pos, p2->m_Pos, p3->m_Pos, p4->m_Pos);
+				Spline::CatmullRom(start, t0, v1, v2, v3, v4);
+				Spline::CatmullRom(end, t1, v1, v2, v3, v4);
+
+				float start_width, end_width;
 				
-				//start *= scale_mul;
-				//end *= scale_mul;
-				
-				float start_width = t0 * p3->m_Speed + (1.0f-t0) * p4->m_Speed;
-				float end_width = t1 * p3->m_Speed + (1.0f-t1) * p4->m_Speed;
-				
-				Spline::CatmullRom(start_width, t0, p1->m_Speed, p2->m_Speed, p3->m_Speed, p4->m_Speed);
-				Spline::CatmullRom(end_width, t1, p1->m_Speed, p2->m_Speed, p3->m_Speed, p4->m_Speed);
-				
+				Spline::CatmullRom(start_width, t0, points[p1].m_Speed, points[p2].m_Speed, points[p3].m_Speed, points[p4].m_Speed);
+				Spline::CatmullRom(end_width, t1, points[p1].m_Speed, points[p2].m_Speed, points[p3].m_Speed, points[p4].m_Speed);
+
 				start_width *= GrafDrawingParams::g_BrushSize;
 				end_width *= GrafDrawingParams::g_BrushSize;
-				
-				start_width *= age_mul;
-				end_width *= age_mul;
 
-				Quatf start_ori = old_ori.slerpShortestUnenforced(t0, new_ori);
-				Quatf end_ori = old_ori.slerpShortestUnenforced(t1, new_ori);
-				
-				DrawSegment(tri_mesh, start, start_width, start_ori, end, end_width, end_ori, curr_index);
+				Vec3f forward = end - start;
+				forward.normalize();
+				Vec3f right = forward.cross(Vec3f(0,0,1.0f));
+				right.normalize();
+				Vec3f up = forward.cross(right);
+				up.normalize();
+				Matrix44f m = Matrix44f(forward, right, up);
+				Quatf ori(m);
+
+				//bleugh.
+				if(p2 == 0)
+				{
+					AddSegmentVertices(tri_mesh, start, start_width, ori, (u32)GrafDrawingParams::g_CircleSubdivs, curr_index);
+				}
+				//if(p3 == num - 1 && i == num_spline_subdivs - 1)
+				//{
+				//	tri_mesh.appendVertex(end);
+				//	u32 subdivs = (u32)GrafDrawingParams::g_CircleSubdivs;
+				//	u32 end_index = curr_index + subdivs;
+
+				//	for(u32 i=0; i<subdivs; ++i)
+				//	{
+				//		tri_mesh.appendTriangle(curr_index+i,	end_index,			curr_index+i+1);
+				//	}
+				//}
+				//else
+				{
+					AddSegmentVerticesAndIndices(tri_mesh, end, end_width, ori, (u32)GrafDrawingParams::g_CircleSubdivs, curr_index);
+				}
 			}
 
-			p1 = p2;
-			p2 = p3;
-			p3 = p4;
-			p4 = ++point_it;
+			//increment indices.
+			p1=p2;
+			p2=p3;
+			p3=p4;
+			++p4;
+			if(p4 > num-1)
+			{
+				p4 = num - 1;
+			}
 		}
 	}
-	
+
 	gl::draw(tri_mesh);
 }
 
 //*******************************************************************************************************
-void CGMLData::DrawSegment(TriMesh& tri_mesh, const Vec3f& p1, float w1, Quatf& q1, const Vec3f& p2, float w2, Quatf& q2, int& curr_index)
+void CGMLData::AddSegmentVertices(ci::TriMesh& tri_mesh, const ci::Vec3f& point, float width, ci::Quatf& orientation, u32 subdivs, u32& curr_index)
 {
-	int num_subdivs = (int)GrafDrawingParams::g_CircleSubdivs;
-	float angle_inc = (float)M_PI * 2.0f / (float) num_subdivs;
+	float angle_inc = (float)M_PI * 2.0f / (float) subdivs;
 
-	gl::drawLine(p1, p2);
-
-	for(int i=0; i<num_subdivs; ++i)
+	for(u32 i=0; i<subdivs; ++i)
 	{
-		float angle_1 = i*angle_inc;
-		float angle_2 = (i+1)*angle_inc;
+		float angle = i*angle_inc;
+		Vec3f offset = Vec3f(0, cos(angle), -sin(angle));
+		Vec3f final_point = point + orientation * offset * width;
 
-		Vec3f offset_1 = q1 * Vec3f(0, cos(angle_1), -sin(angle_1));
-		Vec3f offset_2 = q2 * Vec3f(0, cos(angle_2), -sin(angle_2));
-		
-		Vec3f v1 = p1 + offset_1 * w1;
-		Vec3f v2 = p2 + offset_1 * w2;
-		Vec3f v3 = p1 + offset_2 * w1;
-		Vec3f v4 = p2 + offset_2 * w2;
-
-		gl::drawLine(v1, v3);
-		
-		tri_mesh.appendVertex(v1);
-		tri_mesh.appendVertex(v2);
-		tri_mesh.appendVertex(v3);
-		tri_mesh.appendVertex(v4);
-		
-		//doh! much easier to just use dir from centre to vert fo normals!
-		Vec3f n1 = (v1 - p1);
-		Vec3f n2 = (v2 - p2);
-		Vec3f n3 = (v3 - p1);
-		Vec3f n4 = (v4 - p2);
-		
-		n1.normalize();
-		n2.normalize();
-		n3.normalize();
-		n4.normalize();
-		
-		/*
-		Vec3f e1 = v2 - v1;
-		Vec3f e2 = v4 - v2;
-		Vec3f e3 = v3 - v4;
-		Vec3f e4 = v1 - v3;
-		e1.normalize();
-		e2.normalize();
-		e3.normalize();
-		e4.normalize();
-		Vec3f n1 = (e1).cross(-e4);
-		Vec3f n2 = (e2).cross(-e1);
-		Vec3f n3 = (e4).cross(-e3);
-		Vec3f n4 = (e3).cross(-e2);
-		 */
-		
-		tri_mesh.appendNormal(n1);
-		tri_mesh.appendNormal(n2);
-		tri_mesh.appendNormal(n3);
-		tri_mesh.appendNormal(n4);
-		
-		bool clockwise = true;
-		if(clockwise)
-		{
-			tri_mesh.appendTriangle(0 + curr_index, 1 + curr_index, 2 + curr_index);
-			tri_mesh.appendTriangle(2 + curr_index, 1 + curr_index, 3 + curr_index);
-		}
-		else 
-		{
-			tri_mesh.appendTriangle(0 + curr_index, 2 + curr_index, 1 + curr_index);
-			tri_mesh.appendTriangle(3 + curr_index, 1 + curr_index, 2 + curr_index);
-		}
-		
-		curr_index += 4;
+		tri_mesh.appendVertex(final_point);
 	}
 }
 
+//*******************************************************************************************************
+void CGMLData::AddSegmentVerticesAndIndices(ci::TriMesh& tri_mesh, const ci::Vec3f& point, float width, ci::Quatf& orientation, u32 subdivs, u32& curr_index)
+{
+	AddSegmentVertices(tri_mesh, point, width, orientation, subdivs, curr_index);
+
+	//do indices.
+	for(u32 i=0; i<subdivs; ++i)
+	{
+		tri_mesh.appendTriangle(curr_index+i,	curr_index+i+subdivs,			curr_index+i+1);
+		tri_mesh.appendTriangle(curr_index+i+1,	curr_index+i+subdivs,			curr_index+i+subdivs+1);
+	}
+
+	curr_index += subdivs;
+}
