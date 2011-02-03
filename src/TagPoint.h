@@ -15,17 +15,31 @@ class CTagPointTransitionerBase
 public:
 	virtual void Update() = 0;
 };
+//---------------------------------------------------------------------------------------------------------
+template <class T>
+class CTemplateTransitionerBase : public CTagPointTransitionerBase
+{
+public:
+	CTemplateTransitionerBase(T* p_current, T* p_desired)
+		:
+		mp_Current(p_current),
+		mp_Desired(p_desired)
+	{
+	}
+
+protected:
+	T*		mp_Current;
+	T*		mp_Desired;
+};
 
 //---------------------------------------------------------------------------------------------------------
 template <class T>
-class CBouncer : public CTagPointTransitionerBase
+class CBouncer : public CTemplateTransitionerBase<T>
 {
 public:
-	CBouncer(T* p_current, T* p_desired, T initial_velocity, float tension, float damping)
-		:
+	CBouncer(T* p_current, T* p_desired, T initial_velocity, float tension, float damping) :
+	CTemplateTransitionerBase(p_current, p_desired),
 		m_Velocity(initial_velocity),
-		mp_Current(p_current),
-		mp_Desired(p_desired),
 		m_Tension(tension),
 		m_Damping(damping)
 	{
@@ -33,13 +47,28 @@ public:
 
 	virtual void Update();
 
-private:
+protected:
 	T		m_Velocity;
-	T*		mp_Current;
-	T*		mp_Desired;
 
 	float	m_Tension;
 	float	m_Damping;
+};
+
+//---------------------------------------------------------------------------------------------------------
+template <class T>
+class CLerper : public CTemplateTransitionerBase<T>
+{
+public:
+	CLerper(T* p_current, T* p_desired, float lerp_speed) :
+	CTemplateTransitionerBase(p_current, p_desired),
+		m_LerpSpeed(lerp_speed)
+	{
+	}
+
+	virtual void Update();
+
+protected:
+	float	m_LerpSpeed;
 };
 
 //---------------------------------------------------------------------------------------------------------

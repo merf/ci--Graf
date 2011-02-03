@@ -17,6 +17,13 @@ template<class T> void CBouncer<T>::Update()
 
 //*******************************************************************************************************
 //*******************************************************************************************************
+template<class T> void CLerper<T>::Update()
+{
+	*mp_Current = lerp(*mp_Current, *mp_Desired, m_LerpSpeed);
+}
+
+//*******************************************************************************************************
+//*******************************************************************************************************
 CTagPoint::CTagPoint(float x, float y, float z, float t)
 : 
 m_DesiredPos(x, y, z),
@@ -53,7 +60,8 @@ void CTagPoint::Reset()
 	m_Transitioners.push_back(p_trans);
 
 	m_CurrPos.set(m_DesiredPos * Vec3f(1, 0, 0));
-	p_trans = new CBouncer<Vec3f>(&m_CurrPos, &m_DesiredPos, Vec3f::zero(), 0.05f, 0.7f);
+	//p_trans = new CBouncer<Vec3f>(&m_CurrPos, &m_DesiredPos, Vec3f::zero(), 0.05f, 0.7f);
+	p_trans = new CLerper<Vec3f>(&m_CurrPos, &m_DesiredPos, 0.1f);
 	m_Transitioners.push_back(p_trans);
 }
 
