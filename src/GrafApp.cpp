@@ -8,10 +8,13 @@
 #include "GMLData.h"
 #include "TagCollection.h"
 
+#include "SimpleGUI.h"
+
 using namespace ci;
 using namespace ci::app;
 using namespace std;
 
+using namespace mowa::sgui;
 
 Vec3f light_pos;
 
@@ -35,6 +38,8 @@ public:
 	params::InterfaceGl		m_Params;
 	CameraPersp				m_Cam;
 	Arcball					mArcball;
+
+	SimpleGUI* gui;
 };
 
 //*************************************************************************************************************************
@@ -58,7 +63,13 @@ void GrafAppApp::setup()
 	m_Rotation.setToIdentity();
 	
 	light_pos = Vec3f(0, 800, 3000);
+
+	gui = new SimpleGUI(this);
+	gui->lightColor = ColorA(1, 1, 0, 1);	
+	gui->addLabel("CONTROLS");
+	gui->addParam("BrushSize", &GrafDrawingParams::g_BrushSize, 0, 0.1f, GrafDrawingParams::g_BrushSize);
 	
+	/*
 	m_Params = params::InterfaceGl( "Parameters", Vec2i( 200, 200 ) );
 	m_Params.addParam("Rotation", &GrafDrawingParams::g_RotationAmount, "min=-7 max=7 step=0.1 keyIncr=r keyDecr=R");
 	m_Params.addParam("Z-Extrusion", &GrafDrawingParams::g_ZExtrusion, "min=0.001 max=5 step=0.1 keyIncr=z keyDecr=Z");
@@ -72,7 +83,7 @@ void GrafAppApp::setup()
 	m_Params.addParam("LightX", &light_pos.x, "min=-1000 max=1000 step=100");
 	m_Params.addParam("LightY", &light_pos.y, "min=-1000 max=1000 step=100");
 	m_Params.addParam("LightZ", &light_pos.z, "min=-10000 max=10000 step=1000");
-	
+	*/
 }
 
 //*************************************************************************************************************************
@@ -144,6 +155,8 @@ void GrafAppApp::draw()
 	
 	
 	params::InterfaceGl::draw();
+	gl::disableWireframe();
+	gui->draw();
 }
 
 CINDER_APP_BASIC( GrafAppApp, RendererGl )

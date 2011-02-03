@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\include;..\..\..\\include;..\..\..\\boost"
+				AdditionalIncludeDirectories="..\include;..\..\..\\include;..\..\..\\boost;..\..\..\blocks\MowaLibs\SimpleGUI\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -185,6 +185,10 @@
 			</File>
 			<File
 				RelativePath="..\src\GrafApp.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\blocks\MowaLibs\SimpleGUI\src\SimpleGUI.cpp"
 				>
 			</File>
 			<File
