@@ -1,25 +1,66 @@
 #include "TagPoint.h"
 
+#include <math.h>
+
+using namespace ci;
+
+//*******************************************************************************************************
+//*******************************************************************************************************
+template<class T> void CBouncer<T>::Update()
+{
+	m_Velocity += (*mp_Desired - *mp_Current) * m_Tension;
+
+	m_Velocity *= m_Damping;
+
+	*mp_Current += m_Velocity;
+}
+
 //*******************************************************************************************************
 //*******************************************************************************************************
 CTagPoint::CTagPoint(float x, float y, float z, float t)
 : 
-m_Pos(x, y, z), 
+m_DesiredPos(x, y, z),
+m_CurrPos(x, y, z),
 m_Time(t), 
-m_DesiredWidth(0), 
-m_CurrWidth(0), 
-m_WidthVel(0), 
+m_DesiredWidth(0),
 m_Timer(0) 
 { 
-	Reset();
+	//Reset();
+}
+
+//*******************************************************************************************************
+CTagPoint::~CTagPoint()
+{
+	for(std::list<CTagPointTransitionerBase*>::iterator it = m_Transitioners.begin(); it != m_Transitioners.end(); ++it)
+	{
+		delete *it;
+	}
 }
 
 //*******************************************************************************************************
 void CTagPoint::Reset()
 {
 	m_Timer = 0;
+
+	for(std::list<CTagPointTransitionerBase*>::iterator it = m_Transitioners.begin(); it != m_Transitioners.end(); ++it)
+	{
+		delete *it;
+	}
+	m_Transitioners.clear();
+
 	m_CurrWidth = 0;
-	m_WidthVel = 0;
+	CTagPointTransitionerBase* p_trans = new CBouncer<float>(&m_CurrWidth, &m_DesiredWidth, 0.0f, 0.5f, 0.9f);
+	m_Transitioners.push_back(p_trans);
+
+	m_CurrPos.set(m_DesiredPos * Vec3f(1, 0, 0));
+	p_trans = new CBouncer<Vec3f>(&m_CurrPos, &m_DesiredPos, Vec3f::zero(), 0.05f, 0.7f);
+	m_Transitioners.push_back(p_trans);
+}
+
+//*******************************************************************************************************
+void CTagPoint::SetDesiredWidth(float width) 
+{ 
+	m_DesiredWidth = width;
 }
 
 //*******************************************************************************************************
@@ -28,13 +69,20 @@ void CTagPoint::Update()
 	m_Timer += 0.05f;
 	if(IsActive())
 	{
-		static float vel_mul = 0.5f;
-		m_WidthVel += (m_DesiredWidth - m_CurrWidth) * vel_mul;
-
-		m_CurrWidth += m_WidthVel;
-
-		static float damping = 0.9f;
-		m_WidthVel *= damping;
+		for(std::list<CTagPointTransitionerBase*>::iterator it = m_Transitioners.begin(); it != m_Transitioners.end(); ++it)
+		{
+			(*it)->Update();
+		}
 	}
+}
+
+//*******************************************************************************************************
+void CTagPoint::SetPos(Vec3fArg p)
+{ 
+	if(_isnan(p.x) || _isnan(p.y) || _isnan(p.z))
+	{
+		m_CurrPos.x = 0;
+	}
+	m_DesiredPos = p; 
 }
 

@@ -24,6 +24,15 @@ m_CurrTag(0)
 }
 	
 //*************************************************************************************************************************
+CTagCollection::~CTagCollection()
+{
+	for(std::vector<CTag*>::iterator it = m_TagData.begin(); it != m_TagData.end(); ++it)
+	{
+		delete *it;
+	}
+}
+
+//*************************************************************************************************************************
 void CTagCollection::Reset() 
 { 
 	m_CurrTag++; 
@@ -34,7 +43,7 @@ void CTagCollection::Reset()
 
 	if(m_CurrTag < m_TagData.size())
 	{
-		m_TagData[m_CurrTag].Reset();
+		m_TagData[m_CurrTag]->Reset();
 	}
 }
 
@@ -51,7 +60,7 @@ void CTagCollection::ReadTagData()
 				//console() << "   " << it->path().filename() << " size(bytes): " << fs::file_size( *it ) << std::endl;
 				fs::path file = it->path();
 				std::string str = file.string();
-				m_TagData.push_back(CTag(str));
+				m_TagData.push_back(new CTag(str));
 			}
 		}
 	}
@@ -60,17 +69,17 @@ void CTagCollection::ReadTagData()
 //*************************************************************************************************************************
 const CTag& CTagCollection::GetCurrTag()
 { 
-	return m_TagData[m_CurrTag]; 
+	return *m_TagData[m_CurrTag]; 
 }
 
 //*************************************************************************************************************************
 void CTagCollection::Update()
 { 
-	m_TagData[m_CurrTag].Update();
+	m_TagData[m_CurrTag]->Update();
 }
 
 //*************************************************************************************************************************
 void CTagCollection::Draw()
 { 
-	m_TagData[m_CurrTag].Draw(); 
+	m_TagData[m_CurrTag]->Draw(); 
 }

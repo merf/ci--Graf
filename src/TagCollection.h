@@ -9,7 +9,8 @@
 class CTagCollection
 {
 public:
-	CTagCollection();	
+	CTagCollection();
+	~CTagCollection();
 
 	void					Reset();
 	void					ReadTagData();
@@ -20,5 +21,5 @@ public:
 	
 private:
 	unsigned int			m_CurrTag;
-	std::vector<CTag>	m_TagData;	
+	std::vector<CTag*>	m_TagData;	
 };

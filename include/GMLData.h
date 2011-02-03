@@ -26,8 +26,9 @@ class CTagStroke
 {
 public:
 	CTagStroke(const ci::XmlTree& stroke_xml);
+	~CTagStroke();
 
-	typedef std::vector <CTagPoint> TPointList;
+	typedef std::vector <CTagPoint*> TPointList;
 
 	const TPointList&					GetData() const { return m_Points; }
 	void								ComputeWidths();
@@ -49,6 +50,7 @@ class CTag
 {
 public:
 	CTag(std::string file_path);
+	~CTag();
 	
 	void								Update();
 	void								Draw();
@@ -59,7 +61,7 @@ private:
 	void								ParseXML(ci::XmlTree& xml);
 	
 	int									GetNumStrokes() const { return m_Strokes.size(); }	
-	const CTagStroke::TPointList&	GetStrokeData(int i) const { return m_Strokes[i].GetData(); }
+	const CTagStroke::TPointList&	GetStrokeData(int i) const { return m_Strokes[i]->GetData(); }
 
 	void								DrawSegment(ci::TriMesh& tri_mesh, const ci::Vec3f& p1, float w1, ci::Quatf& q1, const ci::Vec3f& p2, float w2, ci::Quatf& q2, u32& curr_index);
 
@@ -68,6 +70,6 @@ private:
 	void								AddSegmentVerticesAndIndices(ci::TriMesh& tri_mesh, const ci::Vec3f& point, float width, ci::Quatf& orientation, u32 subdivs, u32& curr_index);
 
 	std::string							m_Artist;
-	typedef std::vector<CTagStroke> TStrokeList;
+	typedef std::vector<CTagStroke*> TStrokeList;
 	TStrokeList							m_Strokes;
 };

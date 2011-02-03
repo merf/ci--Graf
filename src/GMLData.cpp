@@ -19,7 +19,7 @@ float GrafDrawingParams::g_RotationAmount	= 0.4f;
 float GrafDrawingParams::g_ZExtrusion		= 100.0f;
 float GrafDrawingParams::g_MaxSpeed			= 20;
 float GrafDrawingParams::g_MinSpeed			= 0.1f;
-float GrafDrawingParams::g_BrushSize		= 0.01f;
+float GrafDrawingParams::g_BrushSize		= 0.05f;
 float GrafDrawingParams::g_CircleSubdivs	= 8;
 float GrafDrawingParams::g_SplineSubdivs	= 5;
 
@@ -56,7 +56,8 @@ CTagStroke::CTagStroke(const XmlTree& stroke_xml)
 			}
 		}
 
-		CTagPoint stroke_data_point(x, y, z, t);
+		CTagPoint* stroke_data_point = new CTagPoint(x, y, z, t);
+		stroke_data_point->Reset();
 		m_Points.push_back(stroke_data_point);
 	}
 
@@ -72,19 +73,27 @@ CTagStroke::CTagStroke(const XmlTree& stroke_xml)
 		for(int i=0; i<num_pts; ++i)
 		{
 			Vec3f p1 = Vec3f(cosf(circle_inc*i), -sinf(circle_inc*i), (float)i) * width;
-			m_Points.push_back(CTagPoint(p1.x, p1.y, (float)i, (float)i));
+			m_Points.push_back(new CTagPoint(p1.x, p1.y, (float)i, (float)i));
 			width *= 1.1f;
 		}
 	}
 }
 
+//*******************************************************************************************************
+CTagStroke::~CTagStroke()
+{
+	for(TPointList::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
+	{
+		delete *it;
+	}
+}
 
 //*******************************************************************************************************
 void CTagStroke::Reset()
 {
 	for(TPointList::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 	{
-		it->Reset();
+		(*it)->Reset();
 	}
 }
 
@@ -101,33 +110,33 @@ void CTagStroke::ComputeWidths()
 		{
 			//TODO - this is a rubbish way to calculate speed since corners will give large
 			//values, better to use the spline.
-			float time = fabsf(it->GetTime() - prev_time);
-			Vec3f dir = it->GetPos() - prev_point;
-			it->SetDesiredWidth(dir.length() / time);
-			if(it->GetWidth() > max_width)
+			float time = fabsf((*it)->GetTime() - prev_time);
+			Vec3f dir = (*it)->GetPos() - prev_point;
+			(*it)->SetDesiredWidth(dir.length() / time);
+			if((*it)->GetDesiredWidth() > max_width)
 			{
-				max_width = it->GetWidth();
+				max_width = (*it)->GetDesiredWidth();
 			}
 		}
 		else
 		{
-			it->SetDesiredWidth(0.0f);
+			(*it)->SetDesiredWidth(0.0f);
 		}
 
-		prev_point = it->GetPos();
-		prev_time = it->GetTime();
+		prev_point = (*it)->GetPos();
+		prev_time = (*it)->GetTime();
 
 		first = false;
 	}
 	
-	m_Points[m_Points.size()-1].SetDesiredWidth(0);
+	m_Points[m_Points.size()-1]->SetDesiredWidth(0);
 
 	if(max_width > 0)
 	{
 		float one_on_max_width = 1.0f / max_width;
 		for(TPointList::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 		{
-			it->SetDesiredWidth(it->GetWidth() * one_on_max_width);
+			(*it)->SetDesiredWidth((*it)->GetDesiredWidth() * one_on_max_width);
 		}
 	}
 }
@@ -174,7 +183,7 @@ void CTagStroke::Normalise()
 
 	for(TPointList::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 	{
-		Vec3f p = it->GetPos();
+		Vec3f p = (*it)->GetDesiredPos();
 		if(p.x > max_x) { max_x = p.x; }
 		if(p.x < min_x) { min_x = p.x; }
 
@@ -199,11 +208,11 @@ void CTagStroke::Normalise()
 
 	for(TPointList::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 	{
-		Vec3f pos = it->GetPos();
+		Vec3f pos = (*it)->GetDesiredPos();
 		pos -= origin;
 		pos *= mul;
 		pos += centre;
-		it->SetPos(pos);
+		(*it)->SetPos(pos);
 	}
 }
 
@@ -212,7 +221,7 @@ void CTagStroke::Update()
 {
 	for(TPointList::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 	{
-		it->Update();
+		(*it)->Update();
 	}
 }
 
@@ -258,10 +267,19 @@ CTag::CTag(std::string file_path)
 
 	for(TStrokeList::iterator it = m_Strokes.begin(); it != m_Strokes.end(); ++it)
 	{
-		it->Normalise();
-		it->ComputeWidths();
+		(*it)->Normalise();
+		(*it)->ComputeWidths();
 		//it->ComputeTangents();
 		//it->ComputePTF();
+	}
+}
+
+//*******************************************************************************************************
+CTag::~CTag()
+{
+	for(TStrokeList::iterator it = m_Strokes.begin(); it != m_Strokes.end(); ++it)
+	{
+		delete *it;
 	}
 }
 
@@ -270,7 +288,7 @@ void CTag::Reset()
 {
 	for(TStrokeList::iterator it = m_Strokes.begin(); it != m_Strokes.end(); ++it)
 	{
-		it->Reset();
+		(*it)->Reset();
 	}
 }
 
@@ -299,10 +317,8 @@ void CTag::ParseXML(XmlTree& xml_tree)
 					const std::list<XmlTree>& strokes = item->getChildren();
 					for(std::list<XmlTree>::const_iterator stroke_it = strokes.begin(); stroke_it != strokes.end(); ++stroke_it)
 					{
-						CTagStroke stroke_data(*stroke_it);
-						
-						
-						m_Strokes.push_back(stroke_data);
+						CTagStroke* stroke = new CTagStroke(*stroke_it);
+						m_Strokes.push_back(stroke);
 					}
 				}
 			}
@@ -315,20 +331,20 @@ void CTag::Update()
 {
 	for(u32 i_stroke=0; i_stroke<m_Strokes.size(); ++i_stroke)
 	{
-		m_Strokes[i_stroke].Update();
+		m_Strokes[i_stroke]->Update();
 	}
 }
 
 //*******************************************************************************************************
 void CTag::Draw()
 {
-	//gl::enableWireframe();
+	gl::enableWireframe();
 
 	ci::TriMesh tri_mesh;
 
 	for(u32 i_stroke=0; i_stroke<m_Strokes.size(); ++i_stroke)
 	{
-		const CTagStroke::TPointList& points = m_Strokes[i_stroke].GetData();
+		const CTagStroke::TPointList& points = m_Strokes[i_stroke]->GetData();
 
 		u32 curr_index = 0;
 
@@ -341,10 +357,10 @@ void CTag::Draw()
 		for(u32 i_point=0; i_point<num-1; ++i_point)
 		{
 			//retrieve control points.
-			Vec3f v1 = points[p1].GetPos();
-			Vec3f v2 = points[p2].GetPos();
-			Vec3f v3 = points[p3].GetPos();
-			Vec3f v4 = points[p4].GetPos();
+			Vec3f v1 = points[p1]->GetPos();
+			Vec3f v2 = points[p2]->GetPos();
+			Vec3f v3 = points[p3]->GetPos();
+			Vec3f v4 = points[p4]->GetPos();
 
 			//subdivide spline.
 			int num_spline_subdivs = (int)GrafDrawingParams::g_SplineSubdivs;
@@ -359,8 +375,8 @@ void CTag::Draw()
 
 				float start_width, end_width;
 				
-				Spline::CatmullRom(start_width, t0, points[p1].GetWidth(), points[p2].GetWidth(), points[p3].GetWidth(), points[p4].GetWidth());
-				Spline::CatmullRom(end_width, t1, points[p1].GetWidth(), points[p2].GetWidth(), points[p3].GetWidth(), points[p4].GetWidth());
+				Spline::CatmullRom(start_width, t0, points[p1]->GetWidth(), points[p2]->GetWidth(), points[p3]->GetWidth(), points[p4]->GetWidth());
+				Spline::CatmullRom(end_width, t1, points[p1]->GetWidth(), points[p2]->GetWidth(), points[p3]->GetWidth(), points[p4]->GetWidth());
 
 				start_width *= GrafDrawingParams::g_BrushSize;
 				end_width *= GrafDrawingParams::g_BrushSize;
@@ -406,7 +422,7 @@ void CTag::Draw()
 				p4 = num - 1;
 			}
 
-			if(!points[p3].IsActive())
+			if(!points[p3]->IsActive())
 			{
 				break;
 			}
@@ -428,8 +444,8 @@ void CTag::AddSegmentVertices(ci::TriMesh& tri_mesh, const ci::Vec3f& point, flo
 		Vec3f final_point = point + orientation * offset * width;
 
 		tri_mesh.appendVertex(final_point);
-		//float f = i / (float)subdivs;
-		//tri_mesh.appendColorRGB(Color(f, 0, 1-f));
+		float f = i / (float)subdivs;
+		tri_mesh.appendColorRGB(Color(f, 0, 1-f));
 	}
 }
 
