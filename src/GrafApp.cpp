@@ -45,8 +45,9 @@ public:
 //*************************************************************************************************************************
 void GrafAppApp::setup()
 {	
-	setWindowSize(800, 600);
-	m_Cam.lookAt(Vec3f(0, 0, -2), Vec3f::zero(), Vec3f(0, -1, 0));
+	setWindowSize(1280, 1024);
+	m_Cam.lookAt(Vec3f(0, 0, -3), Vec3f::zero(), Vec3f(0, -1, 0));
+	m_Cam.setNearClip(0.00001f);
 
 	// Arcball
 	mArcball.setWindowSize( getWindowSize() );
@@ -145,6 +146,7 @@ void GrafAppApp::draw()
 
 	// clear out the window with black
 	gl::clear(Color(1,1,1));
+	//gl::clear(Color(0,0,0));
 
 	glColor3f(1,1,1);
 	glColor3f(0,0,0);
@@ -154,7 +156,7 @@ void GrafAppApp::draw()
 	glPopMatrix();
 	
 	
-	params::InterfaceGl::draw();
+	//params::InterfaceGl::draw();
 	gl::disableWireframe();
 	gui->draw();
 }

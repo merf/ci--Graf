@@ -17,6 +17,9 @@
 		00CCAF15116A9FEE008396D5 /* CinderApp.icns in Resources */ = {isa = PBXBuildFile; fileRef = 00CCAF14116A9FEE008396D5 /* CinderApp.icns */; };
 		2828781812F73B8800304312 /* Spline.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2828781412F73B8800304312 /* Spline.cpp */; };
 		2828781912F73B8800304312 /* TagCollection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2828781612F73B8800304312 /* TagCollection.cpp */; };
+		28B0A1C412FB3AFD00BE3C96 /* TagPoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28B0A1C112FB3AFD00BE3C96 /* TagPoint.cpp */; };
+		28B0A20012FB3E0F00BE3C96 /* SimpleGUI.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28B0A1FF12FB3E0F00BE3C96 /* SimpleGUI.cpp */; };
+		28B0A21312FB3E6100BE3C96 /* pf_tempesta_seven.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 28B0A21212FB3E6100BE3C96 /* pf_tempesta_seven.ttf */; };
 		28E9D5B212F465210060D1F9 /* GMLData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28E9D5B112F465210060D1F9 /* GMLData.cpp */; };
 		5323E6B20EAFCA74003A9687 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B10EAFCA74003A9687 /* CoreVideo.framework */; };
 		5323E6B60EAFCA7E003A9687 /* QTKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B50EAFCA7E003A9687 /* QTKit.framework */; };
@@ -39,6 +42,11 @@
 		2828781512F73B8800304312 /* Spline.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Spline.h; path = ../src/Spline.h; sourceTree = SOURCE_ROOT; };
 		2828781612F73B8800304312 /* TagCollection.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TagCollection.cpp; path = ../src/TagCollection.cpp; sourceTree = SOURCE_ROOT; };
 		2828781712F73B8800304312 /* TagCollection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TagCollection.h; path = ../src/TagCollection.h; sourceTree = SOURCE_ROOT; };
+		28B0A1C112FB3AFD00BE3C96 /* TagPoint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TagPoint.cpp; path = ../src/TagPoint.cpp; sourceTree = SOURCE_ROOT; };
+		28B0A1C212FB3AFD00BE3C96 /* TagPoint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TagPoint.h; path = ../src/TagPoint.h; sourceTree = SOURCE_ROOT; };
+		28B0A1C312FB3AFD00BE3C96 /* types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = types.h; path = ../src/types.h; sourceTree = SOURCE_ROOT; };
+		28B0A1FF12FB3E0F00BE3C96 /* SimpleGUI.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SimpleGUI.cpp; path = ../../../blocks/MowaLibs/SimpleGUI/src/SimpleGUI.cpp; sourceTree = SOURCE_ROOT; };
+		28B0A21212FB3E6100BE3C96 /* pf_tempesta_seven.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = pf_tempesta_seven.ttf; path = ../../../blocks/MowaLibs/SimpleGUI/resources/pf_tempesta_seven.ttf; sourceTree = SOURCE_ROOT; };
 		28E9D5A912F464590060D1F9 /* GMLData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GMLData.h; path = ../include/GMLData.h; sourceTree = SOURCE_ROOT; };
 		28E9D5B112F465210060D1F9 /* GMLData.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GMLData.cpp; path = ../src/GMLData.cpp; sourceTree = SOURCE_ROOT; };
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
@@ -75,6 +83,9 @@
 		080E96DDFE201D6D7F000001 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				28B0A1C112FB3AFD00BE3C96 /* TagPoint.cpp */,
+				28B0A1C212FB3AFD00BE3C96 /* TagPoint.h */,
+				28B0A1C312FB3AFD00BE3C96 /* types.h */,
 				2828781412F73B8800304312 /* Spline.cpp */,
 				2828781512F73B8800304312 /* Spline.h */,
 				2828781612F73B8800304312 /* TagCollection.cpp */,
@@ -120,9 +131,18 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		28B0A1F812FB3DFB00BE3C96 /* Blocks */ = {
+			isa = PBXGroup;
+			children = (
+				28B0A1FF12FB3E0F00BE3C96 /* SimpleGUI.cpp */,
+			);
+			name = Blocks;
+			sourceTree = "<group>";
+		};
 		29B97314FDCFA39411CA2CEA /* Graf */ = {
 			isa = PBXGroup;
 			children = (
+				28B0A1F812FB3DFB00BE3C96 /* Blocks */,
 				29B97315FDCFA39411CA2CEA /* Headers */,
 				080E96DDFE201D6D7F000001 /* Source */,
 				29B97317FDCFA39411CA2CEA /* Resources */,
@@ -144,6 +164,7 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				28B0A21212FB3E6100BE3C96 /* pf_tempesta_seven.ttf */,
 				8D1107310486CEB800E47090 /* Info.plist */,
 				00CCAF14116A9FEE008396D5 /* CinderApp.icns */,
 			);
@@ -210,6 +231,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				00CCAF15116A9FEE008396D5 /* CinderApp.icns in Resources */,
+				28B0A21312FB3E6100BE3C96 /* pf_tempesta_seven.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -224,6 +246,8 @@
 				28E9D5B212F465210060D1F9 /* GMLData.cpp in Sources */,
 				2828781812F73B8800304312 /* Spline.cpp in Sources */,
 				2828781912F73B8800304312 /* TagCollection.cpp in Sources */,
+				28B0A1C412FB3AFD00BE3C96 /* TagPoint.cpp in Sources */,
+				28B0A20012FB3E0F00BE3C96 /* SimpleGUI.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -290,7 +314,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PREBINDING = NO;
 				SDKROOT = "$(DEVELOPER_SDK_DIR)/MacOSX10.6.sdk";
-				USER_HEADER_SEARCH_PATHS = "\"$(CINDER_PATH)/include\" ../include";
+				USER_HEADER_SEARCH_PATHS = "\"$(CINDER_PATH)/include\" ../include \"$(CINDER_PATH)/blocks/MowaLibs/SimpleGUI/include\"";
 			};
 			name = Debug;
 		};
@@ -306,7 +330,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PREBINDING = NO;
 				SDKROOT = "$(DEVELOPER_SDK_DIR)/MacOSX10.6.sdk";
-				USER_HEADER_SEARCH_PATHS = "\"$(CINDER_PATH)/include\" ../include";
+				USER_HEADER_SEARCH_PATHS = "\"$(CINDER_PATH)/include\" ../include \"$(CINDER_PATH)/blocks/MowaLibs/SimpleGUI/include\"";
 			};
 			name = Release;
 		};

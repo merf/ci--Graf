@@ -8,18 +8,18 @@ using namespace ci;
 //*******************************************************************************************************
 template<class T> void CBouncer<T>::Update()
 {
-	m_Velocity += (*mp_Desired - *mp_Current) * m_Tension;
+	m_Velocity += (*CBouncer<T>::mp_Desired - *CBouncer<T>::mp_Current) * m_Tension;
 
 	m_Velocity *= m_Damping;
 
-	*mp_Current += m_Velocity;
+	*CBouncer<T>::mp_Current += m_Velocity;
 }
 
 //*******************************************************************************************************
 //*******************************************************************************************************
 template<class T> void CLerper<T>::Update()
 {
-	*mp_Current = lerp(*mp_Current, *mp_Desired, m_LerpSpeed);
+	*CLerper<T>::mp_Current = lerp(*CLerper<T>::mp_Current, *CLerper<T>::mp_Desired, m_LerpSpeed);
 }
 
 //*******************************************************************************************************
@@ -56,12 +56,12 @@ void CTagPoint::Reset()
 	m_Transitioners.clear();
 
 	m_CurrWidth = 0;
-	CTagPointTransitionerBase* p_trans = new CBouncer<float>(&m_CurrWidth, &m_DesiredWidth, 0.0f, 0.5f, 0.9f);
+	CTagPointTransitionerBase* p_trans = new CBouncer<float>(&m_CurrWidth, &m_DesiredWidth, 0.0f, 0.1f, 0.9f);
 	m_Transitioners.push_back(p_trans);
 
-	m_CurrPos.set(m_DesiredPos * Vec3f(1, 0, 0));
-	//p_trans = new CBouncer<Vec3f>(&m_CurrPos, &m_DesiredPos, Vec3f::zero(), 0.05f, 0.7f);
-	p_trans = new CLerper<Vec3f>(&m_CurrPos, &m_DesiredPos, 0.1f);
+	m_CurrPos.set(m_DesiredPos * Vec3f(1, 0, 0) + Vec3f(3, 0, 10));
+	p_trans = new CBouncer<Vec3f>(&m_CurrPos, &m_DesiredPos, Vec3f::zero(), 0.05f, 0.85f);
+	//p_trans = new CLerper<Vec3f>(&m_CurrPos, &m_DesiredPos, 0.1f);
 	m_Transitioners.push_back(p_trans);
 }
 
@@ -87,10 +87,6 @@ void CTagPoint::Update()
 //*******************************************************************************************************
 void CTagPoint::SetPos(Vec3fArg p)
 { 
-	if(_isnan(p.x) || _isnan(p.y) || _isnan(p.z))
-	{
-		m_CurrPos.x = 0;
-	}
 	m_DesiredPos = p; 
 }
 

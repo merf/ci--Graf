@@ -38,7 +38,7 @@ class CBouncer : public CTemplateTransitionerBase<T>
 {
 public:
 	CBouncer(T* p_current, T* p_desired, T initial_velocity, float tension, float damping) :
-	CTemplateTransitionerBase(p_current, p_desired),
+	CTemplateTransitionerBase<T>(p_current, p_desired),
 		m_Velocity(initial_velocity),
 		m_Tension(tension),
 		m_Damping(damping)
@@ -60,7 +60,7 @@ class CLerper : public CTemplateTransitionerBase<T>
 {
 public:
 	CLerper(T* p_current, T* p_desired, float lerp_speed) :
-	CTemplateTransitionerBase(p_current, p_desired),
+	CTemplateTransitionerBase<T>(p_current, p_desired),
 		m_LerpSpeed(lerp_speed)
 	{
 	}

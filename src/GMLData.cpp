@@ -1,6 +1,5 @@
 #include "cinder/app/App.h"
 
-#include <mmsystem.h>
 #include <limits>
 #include "GMLData.h"
 #include "cinder/Xml.h"
@@ -56,7 +55,7 @@ CTagStroke::CTagStroke(const XmlTree& stroke_xml)
 			}
 		}
 
-		CTagPoint* stroke_data_point = new CTagPoint(x, y, z, t);
+		CTagPoint* stroke_data_point = new CTagPoint(x, y, -z, t);
 		stroke_data_point->Reset();
 		m_Points.push_back(stroke_data_point);
 	}
@@ -113,6 +112,7 @@ void CTagStroke::ComputeWidths()
 			float time = fabsf((*it)->GetTime() - prev_time);
 			Vec3f dir = (*it)->GetPos() - prev_point;
 			(*it)->SetDesiredWidth(dir.length() / time);
+			(*it)->SetDesiredWidth(dir.length());
 			if((*it)->GetDesiredWidth() > max_width)
 			{
 				max_width = (*it)->GetDesiredWidth();
@@ -198,13 +198,19 @@ void CTagStroke::Normalise()
 	float y_size = max_y - min_y;
 	float z_size = max_z - min_z;
 
-	float one_on_x_size = 1.0f / x_size;
-	float one_on_y_size = 1.0f / y_size;
+	if(z_size == 0)
+	{
+		z_size = 1;
+	}
+	
+	float one_on_x_size = 2.0f / x_size;
+	float one_on_y_size = 2.0f / y_size;
 	float one_on_z_size = 1.0f / z_size;
 
 	Vec3f origin(min_x, min_y, min_z);
 	Vec3f mul(one_on_x_size, one_on_y_size, one_on_z_size);
-	Vec3f centre(-0.5f, -0.5f, -0.5f);
+	//Vec3f centre(-0.5f, -0.5f, -0.5f);
+	Vec3f centre(-1.0f, -1.0f, -0.5f);
 
 	for(TPointList::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 	{
@@ -338,7 +344,7 @@ void CTag::Update()
 //*******************************************************************************************************
 void CTag::Draw()
 {
-	gl::enableWireframe();
+	//gl::enableWireframe();
 
 	ci::TriMesh tri_mesh;
 
@@ -445,7 +451,7 @@ void CTag::AddSegmentVertices(ci::TriMesh& tri_mesh, const ci::Vec3f& point, flo
 
 		tri_mesh.appendVertex(final_point);
 		float f = i / (float)subdivs;
-		tri_mesh.appendColorRGB(Color(f, 0, 1-f));
+		tri_mesh.appendColorRGB(Color(f, f, f));
 	}
 }
 
