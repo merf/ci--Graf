@@ -9,11 +9,19 @@
 
 class CTagPoint;
 
+enum ETransitionType
+{
+	TRANSITION_IN,
+	TRANSITION_WAIT,
+	TRANSITION_OUT,
+	TRANSITION_END,
+};
+
 //---------------------------------------------------------------------------------------------------------
 class CTagPointTransitionerBase
 {
 public:
-	virtual void Update() = 0;
+	virtual bool Update() = 0;
 };
 //---------------------------------------------------------------------------------------------------------
 template <class T>
@@ -37,21 +45,24 @@ template <class T>
 class CBouncer : public CTemplateTransitionerBase<T>
 {
 public:
-	CBouncer(T* p_current, T* p_desired, T initial_velocity, float tension, float damping) :
+	CBouncer(T* p_current, T* p_desired, T initial_velocity, float tension, float damping, float allowed_diff) :
 	CTemplateTransitionerBase<T>(p_current, p_desired),
 		m_Velocity(initial_velocity),
 		m_Tension(tension),
-		m_Damping(damping)
+		m_Damping(damping),
+		m_AllowedDiffSq(allowed_diff*allowed_diff)
 	{
 	}
 
-	virtual void Update();
+	virtual bool Update();
 
 protected:
 	T		m_Velocity;
 
 	float	m_Tension;
 	float	m_Damping;
+
+	float	m_AllowedDiffSq;
 };
 
 //---------------------------------------------------------------------------------------------------------
@@ -59,16 +70,18 @@ template <class T>
 class CLerper : public CTemplateTransitionerBase<T>
 {
 public:
-	CLerper(T* p_current, T* p_desired, float lerp_speed) :
+	CLerper(T* p_current, T* p_desired, float lerp_speed, float allowed_diff) :
 	CTemplateTransitionerBase<T>(p_current, p_desired),
-		m_LerpSpeed(lerp_speed)
+		m_LerpSpeed(lerp_speed),
+		m_AllowedDiffSq(allowed_diff*allowed_diff)
 	{
 	}
 
-	virtual void Update();
+	virtual bool Update();
 
 protected:
 	float	m_LerpSpeed;
+	float	m_AllowedDiffSq;
 };
 
 //---------------------------------------------------------------------------------------------------------
@@ -86,20 +99,29 @@ public:
 	float			GetDesiredWidth() const { return m_DesiredWidth; }
 	void			SetDesiredWidth(float width);
 
+	const ci::Vec4f& GetColour() const { return m_CurrColour; }		
+
 	float			GetTime() const { return m_Time; }
 
 	bool			IsActive() const { return m_Timer > m_Time; }
 
 	void			Update();
 	void			Reset();
+	bool			HasActiveTransitions();
 
+	void			SetUpTransitioners(ETransitionType type);
+	void			ClearTransitioners();
 private:
 	ci::Vec3f		m_CurrPos;
 	ci::Vec3f		m_DesiredPos;
 
-	float			m_Time;
-	float			m_DesiredWidth;
 	float			m_CurrWidth;
+	float			m_DesiredWidth;
+
+	ci::Vec4f		m_CurrColour;
+	ci::Vec4f		m_DesiredColour;
+
+	float			m_Time;
 
 	std::list<CTagPointTransitionerBase*>	m_Transitioners;
 

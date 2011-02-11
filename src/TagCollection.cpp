@@ -19,8 +19,13 @@ CTagCollection::CTagCollection()
 : 
 m_CurrTag(0) 
 { 
-	Reset(); 
-	ReadTagData(); 
+	NextTag(); 
+	ReadTagData();
+
+	if(m_CurrTag < m_TagData.size())
+	{
+		m_TagData[m_CurrTag]->Reset();
+	}
 }
 	
 //*************************************************************************************************************************
@@ -33,7 +38,7 @@ CTagCollection::~CTagCollection()
 }
 
 //*************************************************************************************************************************
-void CTagCollection::Reset() 
+void CTagCollection::NextTag() 
 { 
 	m_CurrTag++; 
 	if(m_CurrTag >= m_TagData.size()) 
@@ -76,6 +81,11 @@ const CTag& CTagCollection::GetCurrTag()
 void CTagCollection::Update()
 { 
 	m_TagData[m_CurrTag]->Update();
+
+	if(m_TagData[m_CurrTag]->GetCurrTransition() == TRANSITION_END)
+	{
+		NextTag();
+	}
 }
 
 //*************************************************************************************************************************

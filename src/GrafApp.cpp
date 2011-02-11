@@ -1,6 +1,8 @@
 #include "cinder/app/AppBasic.h"
 #include "cinder/gl/gl.h"
 #include "cinder/params/Params.h"
+#include "cinder/ImageIO.h"
+#include "cinder/Utilities.h"
 
 #include "cinder/Camera.h"
 #include "cinder/Arcball.h"
@@ -15,6 +17,8 @@ using namespace ci::app;
 using namespace std;
 
 using namespace mowa::sgui;
+
+const bool WRITE_FRAMES = true;
 
 Vec3f light_pos;
 
@@ -46,6 +50,7 @@ public:
 void GrafAppApp::setup()
 {	
 	setWindowSize(1280, 1024);
+	setWindowSize(640, 480);
 	m_Cam.lookAt(Vec3f(0, 0, -3), Vec3f::zero(), Vec3f(0, -1, 0));
 	m_Cam.setNearClip(0.00001f);
 
@@ -60,7 +65,6 @@ void GrafAppApp::setup()
 	gl::enableDepthRead();
 	gl::enableAlphaBlending();
 
-	//mCamera.lookAt(Vec3f(0, -getWindowHeight()*0.5f, -70), Vec3f(getWindowWidth()*0.5f, getWindowHeight()*0.5f, 0));
 	m_Rotation.setToIdentity();
 	
 	light_pos = Vec3f(0, 800, 3000);
@@ -69,22 +73,6 @@ void GrafAppApp::setup()
 	gui->lightColor = ColorA(1, 1, 0, 1);	
 	gui->addLabel("CONTROLS");
 	gui->addParam("BrushSize", &GrafDrawingParams::g_BrushSize, 0, 0.1f, GrafDrawingParams::g_BrushSize);
-	
-	/*
-	m_Params = params::InterfaceGl( "Parameters", Vec2i( 200, 200 ) );
-	m_Params.addParam("Rotation", &GrafDrawingParams::g_RotationAmount, "min=-7 max=7 step=0.1 keyIncr=r keyDecr=R");
-	m_Params.addParam("Z-Extrusion", &GrafDrawingParams::g_ZExtrusion, "min=0.001 max=5 step=0.1 keyIncr=z keyDecr=Z");
-	m_Params.addParam("MaxSpeed", &GrafDrawingParams::g_MaxSpeed, "min=2 max=100 step=1 keyIncr=x keyDecr=X");
-	m_Params.addParam("MinSpeed", &GrafDrawingParams::g_MinSpeed, "min=1 max=50 step=1 keyIncr=c keyDecr=C");
-	m_Params.addParam("BrushSize", &GrafDrawingParams::g_BrushSize, "min=0 max=1 step=.01 keyIncr=w keyDecr=W");
-
-	m_Params.addParam("CirlceSubdivs", &GrafDrawingParams::g_CircleSubdivs, "min=4 max=32 step=2");
-	m_Params.addParam("SplineSubdivs", &GrafDrawingParams::g_SplineSubdivs, "min=2 max=32 step=2");
-
-	m_Params.addParam("LightX", &light_pos.x, "min=-1000 max=1000 step=100");
-	m_Params.addParam("LightY", &light_pos.y, "min=-1000 max=1000 step=100");
-	m_Params.addParam("LightZ", &light_pos.z, "min=-10000 max=10000 step=1000");
-	*/
 }
 
 //*************************************************************************************************************************
@@ -106,7 +94,7 @@ void GrafAppApp::mouseDrag(MouseEvent event)
 //*************************************************************************************************************************
 void GrafAppApp::keyDown(KeyEvent event)
 {
-	m_TagCollection.Reset();
+	m_TagCollection.NextTag();
 }
 
 //*************************************************************************************************************************
@@ -157,8 +145,35 @@ void GrafAppApp::draw()
 	
 	
 	//params::InterfaceGl::draw();
-	gl::disableWireframe();
 	gui->draw();
+
+	gl::pushMatrices();
+	gl::setMatricesWindow(getWindowSize());
+	gl::disableDepthRead();	
+	gl::disableDepthWrite();
+	gl::enableAlphaBlending();
+
+	glColor3f(1,1,1);
+	float text_size = 24;
+	float padding = text_size * 0.25f;
+	gl::drawString(m_TagCollection.GetCurrTag().GetArtist(), Vec2f(padding, getWindowHeight() - text_size - padding), ColorA(0, 0, 0, 0.5), Font("Impact", text_size));
+
+	gl::disableAlphaBlending();
+	gl::enableDepthRead();
+	gl::enableDepthWrite();
+	gl::color(ColorA(1,1,1,1));
+	gl::popMatrices();
+
+
+	std::string home = getHomeDirectory();
+
+	console() << home;
+
+	if(WRITE_FRAMES)
+	{
+		writeImage( getHomeDirectory() + "Videos\\Graf\\" + "image_" + toString( getElapsedFrames() ) + ".png", copyWindowSurface() );
+	}
+
 }
 
 CINDER_APP_BASIC( GrafAppApp, RendererGl )

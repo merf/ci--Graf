@@ -41,6 +41,9 @@ public:
 
 	void								Update();
 
+	bool								HasActiveTransitions();
+	void								ResetTransition(ETransitionType type);
+
 private:
 	TPointList							m_Points;
 };
@@ -56,6 +59,10 @@ public:
 	void								Draw();
 	
 	void								Reset();
+
+	const std::string&					GetArtist() const { return m_Artist; }
+
+	ETransitionType						GetCurrTransition() const { return m_CurrTransition; }
 	
 private:
 	void								ParseXML(ci::XmlTree& xml);
@@ -66,10 +73,12 @@ private:
 	void								DrawSegment(ci::TriMesh& tri_mesh, const ci::Vec3f& p1, float w1, ci::Quatf& q1, const ci::Vec3f& p2, float w2, ci::Quatf& q2, u32& curr_index);
 
 	//TODO - could pass in a profile to draw along the curve rather than assuming a circle.
-	void								AddSegmentVertices(ci::TriMesh& tri_mesh, const ci::Vec3f& point, float width, ci::Quatf& orientation, u32 subdivs, u32& curr_index);
-	void								AddSegmentVerticesAndIndices(ci::TriMesh& tri_mesh, const ci::Vec3f& point, float width, ci::Quatf& orientation, u32 subdivs, u32& curr_index);
+	void								AddSegmentVertices(ci::TriMesh& tri_mesh, const ci::Vec3f& point, float width, ci::Vec4f& colour, ci::Quatf& orientation, u32 subdivs, u32& curr_index);
+	void								AddSegmentVerticesAndIndices(ci::TriMesh& tri_mesh, const ci::Vec3f& point, float width, ci::Vec4f& colour, ci::Quatf& orientation, u32 subdivs, u32& curr_index);
 
 	std::string							m_Artist;
 	typedef std::vector<CTagStroke*> TStrokeList;
 	TStrokeList							m_Strokes;
+
+	ETransitionType						m_CurrTransition;
 };

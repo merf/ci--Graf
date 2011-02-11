@@ -12,7 +12,7 @@ public:
 	CTagCollection();
 	~CTagCollection();
 
-	void					Reset();
+	void					NextTag();
 	void					ReadTagData();
 	
 	void					Update();

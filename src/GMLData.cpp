@@ -231,6 +231,30 @@ void CTagStroke::Update()
 	}
 }
 
+//*******************************************************************************************************
+bool CTagStroke::HasActiveTransitions()
+{
+	bool active_transitions = false;
+	for(TPointList::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
+	{
+		if((*it)->HasActiveTransitions())
+		{
+			active_transitions = true;
+		}
+	}
+
+	return active_transitions;
+}
+
+//*******************************************************************************************************
+void CTagStroke::ResetTransition(ETransitionType type)
+{
+	for(TPointList::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
+	{
+		(*it)->SetUpTransitioners(type);
+	}
+}
+
 ////*******************************************************************************************************
 //void CGMLDataStroke::ComputePTF()
 //{
@@ -267,12 +291,15 @@ void CTagStroke::Update()
 //*******************************************************************************************************
 //*******************************************************************************************************
 CTag::CTag(std::string file_path)
+:
+m_CurrTransition(TRANSITION_IN)
 {
 	XmlTree doc(loadFile(file_path));
 	ParseXML(doc);
 
 	for(TStrokeList::iterator it = m_Strokes.begin(); it != m_Strokes.end(); ++it)
 	{
+		//TODO - need to perform our normalisation pass across all strokes so that they remain in the same space.
 		(*it)->Normalise();
 		(*it)->ComputeWidths();
 		//it->ComputeTangents();
@@ -296,6 +323,8 @@ void CTag::Reset()
 	{
 		(*it)->Reset();
 	}
+
+	m_CurrTransition = TRANSITION_IN;
 }
 
 //*******************************************************************************************************
@@ -311,6 +340,9 @@ void CTag::ParseXML(XmlTree& xml_tree)
 			{
 				if(item->getTag() == "header")
 				{
+					const XmlTree& client = item->getChild("client");
+					const XmlTree& name = client.getChild("name");
+					m_Artist = name.getValue();
 					//m_Data.m_Artist = item->Get
 					//m_Data.m_Artist
 				}
@@ -339,13 +371,61 @@ void CTag::Update()
 	{
 		m_Strokes[i_stroke]->Update();
 	}
+
+	switch(m_CurrTransition)
+	{
+	case TRANSITION_IN:
+		{
+			bool active_transitions = false;
+
+			//check for all transitions finished.
+			for(u32 i_stroke=0; i_stroke<m_Strokes.size(); ++i_stroke)
+			{
+				if(m_Strokes[i_stroke]->HasActiveTransitions())
+				{
+					active_transitions = true;
+				}
+			}
+
+			if(!active_transitions)
+			{
+				//TODO - really this should go to 'wait'
+				m_CurrTransition = TRANSITION_OUT;
+
+				for(u32 i_stroke=0; i_stroke<m_Strokes.size(); ++i_stroke)
+				{
+					m_Strokes[i_stroke]->ResetTransition(TRANSITION_OUT);
+				}
+			}
+		}
+		break;
+	case TRANSITION_OUT:
+		{
+			bool active_transitions = false;
+
+			//check for all transitions finished.
+			for(u32 i_stroke=0; i_stroke<m_Strokes.size(); ++i_stroke)
+			{
+				if(m_Strokes[i_stroke]->HasActiveTransitions())
+				{
+					active_transitions = true;
+				}
+			}
+
+			if(!active_transitions)
+			{
+				m_CurrTransition = TRANSITION_END;
+			}
+		}
+		break;
+	default:
+		break;
+	}
 }
 
 //*******************************************************************************************************
 void CTag::Draw()
 {
-	//gl::enableWireframe();
-
 	ci::TriMesh tri_mesh;
 
 	for(u32 i_stroke=0; i_stroke<m_Strokes.size(); ++i_stroke)
@@ -387,6 +467,8 @@ void CTag::Draw()
 				start_width *= GrafDrawingParams::g_BrushSize;
 				end_width *= GrafDrawingParams::g_BrushSize;
 
+				Vec4f colour = lerp(points[p2]->GetColour(), points[p3]->GetColour(), t1);
+
 				Vec3f forward = end - start;
 				forward.normalize();
 				Vec3f right = forward.cross(Vec3f(0,0,1.0f));
@@ -399,7 +481,7 @@ void CTag::Draw()
 				//bleugh.
 				if(p2 == 0)
 				{
-					AddSegmentVertices(tri_mesh, start, start_width, ori, (u32)GrafDrawingParams::g_CircleSubdivs, curr_index);
+					AddSegmentVertices(tri_mesh, start, start_width, colour, ori, (u32)GrafDrawingParams::g_CircleSubdivs, curr_index);
 				}
 				//if(p3 == num - 1 && i == num_spline_subdivs - 1)
 				//{
@@ -414,7 +496,7 @@ void CTag::Draw()
 				//}
 				//else
 				{
-					AddSegmentVerticesAndIndices(tri_mesh, end, end_width, ori, (u32)GrafDrawingParams::g_CircleSubdivs, curr_index);
+					AddSegmentVerticesAndIndices(tri_mesh, end, end_width, colour, ori, (u32)GrafDrawingParams::g_CircleSubdivs, curr_index);
 				}
 			}
 
@@ -435,11 +517,17 @@ void CTag::Draw()
 		}
 	}
 
+	gl::enableWireframe();
+	gl::enableAlphaBlending();
+
 	gl::draw(tri_mesh);
+
+	gl::disableWireframe();
+	gl::disableAlphaBlending();
 }
 
 //*******************************************************************************************************
-void CTag::AddSegmentVertices(ci::TriMesh& tri_mesh, const ci::Vec3f& point, float width, ci::Quatf& orientation, u32 subdivs, u32& curr_index)
+void CTag::AddSegmentVertices(ci::TriMesh& tri_mesh, const ci::Vec3f& point, float width, ci::Vec4f& colour, ci::Quatf& orientation, u32 subdivs, u32& curr_index)
 {
 	float angle_inc = (float)M_PI * 2.0f / (float) subdivs;
 
@@ -451,14 +539,15 @@ void CTag::AddSegmentVertices(ci::TriMesh& tri_mesh, const ci::Vec3f& point, flo
 
 		tri_mesh.appendVertex(final_point);
 		float f = i / (float)subdivs;
-		tri_mesh.appendColorRGB(Color(f, f, f));
+		tri_mesh.appendColorRGBA(ColorA(colour.x, colour.y, colour.z, colour.w));
+		//tri_mesh.appendColorRGB(Color(f, 0, 1-f));
 	}
 }
 
 //*******************************************************************************************************
-void CTag::AddSegmentVerticesAndIndices(ci::TriMesh& tri_mesh, const ci::Vec3f& point, float width, ci::Quatf& orientation, u32 subdivs, u32& curr_index)
+void CTag::AddSegmentVerticesAndIndices(ci::TriMesh& tri_mesh, const ci::Vec3f& point, float width, ci::Vec4f& colour, ci::Quatf& orientation, u32 subdivs, u32& curr_index)
 {
-	AddSegmentVertices(tri_mesh, point, width, orientation, subdivs, curr_index);
+	AddSegmentVertices(tri_mesh, point, width, colour, orientation, subdivs, curr_index);
 
 	//do indices.
 	for(u32 i=0; i<subdivs; ++i)
