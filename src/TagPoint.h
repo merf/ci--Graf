@@ -2,6 +2,8 @@
 #include "types.h"
 #include <list>
 
+#include "cinder/Perlin.h"
+
 //We want to be able to specify different ways that points can come into/outof existence
 //inflating/deflating, bouncing, moving into place, drifting away
 //We want a nice method for achieving this where we can just plug in these transitioner
@@ -71,17 +73,54 @@ class CLerper : public CTemplateTransitionerBase<T>
 {
 public:
 	CLerper(T* p_current, T* p_desired, float lerp_speed, float allowed_diff) :
-	CTemplateTransitionerBase<T>(p_current, p_desired),
-		m_LerpSpeed(lerp_speed),
-		m_AllowedDiffSq(allowed_diff*allowed_diff)
-	{
-	}
+	  CTemplateTransitionerBase<T>(p_current, p_desired),
+		  m_LerpSpeed(lerp_speed),
+		  m_AllowedDiffSq(allowed_diff*allowed_diff)
+	  {
+	  }
 
-	virtual bool Update();
+	  virtual bool Update();
 
 protected:
 	float	m_LerpSpeed;
 	float	m_AllowedDiffSq;
+};
+
+//---------------------------------------------------------------------------------------------------------
+template <class T>
+class CPerlin : public CTemplateTransitionerBase<T>
+{
+public:
+	CPerlin(T* p_current) :
+	  CTemplateTransitionerBase<T>(p_current, p_current),
+		  m_Time(0)
+	  {
+	  }
+
+	  virtual bool Update();
+
+	  static ci::Perlin m_Perlin;
+
+protected:
+	float	m_Time;
+	T		m_Vel;
+};
+
+//---------------------------------------------------------------------------------------------------------
+template <class T>
+class CMultiplier : public CTemplateTransitionerBase<T>
+{
+public:
+	CMultiplier(T* p_current, T& mul) :
+	  CTemplateTransitionerBase<T>(p_current, p_current),
+		  m_Multiplier(mul)
+	  {
+	  }
+
+	  virtual bool Update();
+
+protected:
+	T	m_Multiplier;
 };
 
 //---------------------------------------------------------------------------------------------------------
