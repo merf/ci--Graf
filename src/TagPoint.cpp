@@ -1,4 +1,6 @@
 #include "TagPoint.h"
+#include "GMLData.h"
+#include "cinder/app/AppBasic.h"
 
 #include <math.h>
 
@@ -19,13 +21,15 @@ template<class T> float GetLengthSq(T& t)
 void GetNoise(Vec3f& noise, Perlin& perlin, Vec3f& v, float time)
 {
 	float mul1 = 0.5f;
-	float mul2 = 0.01f;
-	float mul3 = 0.5f;
+	float mul2 = 0.1f;
+	float mul3 = 0.15f;
 	float mul4 = 0.5f;
+	
+	time = ci::app::getElapsedFrames() * mul2;
 
-	noise = Vec3f(perlin.noise(v.x * mul1, time * mul2 + v.y * mul3, v.z * mul4), 
-				perlin.noise(v.y * mul1, time * mul2 + v.z * mul3, v.x * mul4), 
-				perlin.noise(v.y * mul1, time * mul2 + v.x * mul3, v.y * mul4));
+	noise = Vec3f(perlin.noise((v.x + time) * mul1, time + v.y * mul3, v.z * mul4), 
+				perlin.noise((v.y + time) * mul1, time + v.z * mul3, v.x * mul4), 
+				perlin.noise((v.y + time) * mul1, time + v.x * mul3, v.y * mul4));
 	//noise -= Vec3f(0.5f, 0.5f, 0.5f);
 	noise *= 0.01f;
 }
@@ -54,12 +58,30 @@ template<class T> bool CBouncer<T>::Update()
 template<class T> bool CLerper<T>::Update()
 {
 	*CLerper<T>::mp_Current = lerp(*CLerper<T>::mp_Current, *CLerper<T>::mp_Desired, m_LerpSpeed);
-
+	
 	T diff = *CLerper<T>::mp_Current - *CLerper<T>::mp_Desired;
 	if(GetLengthSq(diff) < m_AllowedDiffSq)
 	{
 		return false;
 	}
+	
+	return true;
+}
+
+//*******************************************************************************************************
+//*******************************************************************************************************
+template<class T> bool CTimeLine<T>::Update()
+{
+	float f = m_CurrTime / m_TotalTime;
+	
+	*CTimeLine<T>::mp_Current = lerp(CTimeLine<T>::m_Initial, *CTimeLine<T>::mp_Desired, f);
+	
+	if(f > 1)
+	{
+		return false;
+	}
+	
+	m_CurrTime += GrafDrawingParams::g_UpdateSpeed;
 
 	return true;
 }
@@ -71,7 +93,7 @@ template<class T> bool CPerlin<T>::Update()
 	T noise;
 	GetNoise(noise, m_Perlin, *CPerlin<T>::mp_Current, m_Time);
 
-	m_Vel += noise;
+	m_Vel += noise  * GrafDrawingParams::g_UpdateSpeed;
 
 	*CPerlin<T>::mp_Current += m_Vel * m_Time;
 
@@ -84,7 +106,7 @@ template<class T> bool CPerlin<T>::Update()
 //*******************************************************************************************************
 template<class T> bool CMultiplier<T>::Update()
 {
-	*CMultiplier<T>::mp_Current *= m_Multiplier;
+	(*CMultiplier<T>::mp_Current) *= m_Multiplier;
 
 	return true;
 }
@@ -131,8 +153,8 @@ void CTagPoint::SetDesiredWidth(float width)
 //*******************************************************************************************************
 void CTagPoint::Update()
 {
-	m_Timer += 0.05f;
-	//if(IsActive())
+	m_Timer += GrafDrawingParams::g_UpdateSpeed;
+	if(IsActive())
 	{
 		for(std::list<CTagPointTransitionerBase*>::iterator it = m_Transitioners.begin(); it != m_Transitioners.end();)
 		{
@@ -152,9 +174,28 @@ void CTagPoint::Update()
 //*******************************************************************************************************
 bool CTagPoint::HasActiveTransitions()
 {
-	if(IsActive())
+	//if(IsActive())
 	{
-		return !m_Transitioners.empty();
+		if(m_Transitioners.empty())
+		{
+			return false;
+		}
+		else
+		{
+			bool needs_to_finish = false;
+			for(std::list<CTagPointTransitionerBase*>::iterator it = m_Transitioners.begin(); it != m_Transitioners.end(); ++it)
+			{
+				if((*it)->IsRequiredToFinish())
+				{
+					needs_to_finish = true;
+				}
+			}
+			
+			if(!needs_to_finish)
+			{
+				return false;
+			}
+		}
 	}
 	return true;
 }
@@ -179,33 +220,37 @@ void CTagPoint::ClearTransitioners()
 //*******************************************************************************************************
 void CTagPoint::SetUpTransitioners(ETransitionType type)
 {
+	ClearTransitioners();
+	
+	m_Timer = 0;
+	
 	switch(type)
 	{
 	case TRANSITION_IN:
 		{
 			m_CurrWidth = 0;
-			CTagPointTransitionerBase* p_trans = new CBouncer<float>(&m_CurrWidth, &m_DesiredWidth, 0.0f, 0.2f, 0.8f, 0.01f);
-			m_Transitioners.push_back(p_trans);
+			//m_Transitioners.push_back(new CBouncer<float>(&m_CurrWidth, &m_DesiredWidth, 0.0f, 0.2f, 0.8f, 0.01f));
+			m_Transitioners.push_back(new CTimeLine<float>(&m_CurrWidth, &m_DesiredWidth, 1));
 
+			
 			//m_CurrPos.set(m_DesiredPos * Vec3f(1, 0, 0) + Vec3f(3, 0, 10));
-			//p_trans = new CBouncer<Vec3f>(&m_CurrPos, &m_DesiredPos, Vec3f::zero(), 0.05f, 0.85f, 0.01f);
-			p_trans = new CLerper<Vec3f>(&m_CurrPos, &m_DesiredPos, 0.2f, 0.01f);
-			//m_Transitioners.push_back(p_trans);
+			//m_CurrPos.set(m_DesiredPos * Vec3f(1, 0, 1));
+			//m_Transitioners.push_back(new CBouncer<Vec3f>(&m_CurrPos, &m_DesiredPos, Vec3f::zero(), 0.03f, 0.85f, 0.01f));
+			//m_Transitioners.push_back(new CLerper<Vec3f>(&m_CurrPos, &m_DesiredPos, 0.02f, 0.01f));
 
-			/*m_CurrColour = Vec4f(0,0,0,0);
-			p_trans = new CLerper<Vec4f>(&m_CurrColour, &m_DesiredColour, 0.05f, 0.01f);
-			m_Transitioners.push_back(p_trans);*/
+			m_CurrColour = Vec4f(0,0,0,0);
+			m_Transitioners.push_back(new CTimeLine<Vec4f>(&m_CurrColour, &m_DesiredColour, 1));
 
 			break;
 		}
 	case TRANSITION_OUT:
 		{
 			m_DesiredColour = Vec4f(0,0,0,0);
-			m_Transitioners.push_back(new CLerper<Vec4f>(&m_CurrColour, &m_DesiredColour, 0.05f, 0.01f));
-			m_DesiredWidth = 0;
-			m_Transitioners.push_back(new CLerper<float>(&m_CurrWidth, &m_DesiredWidth, 0.05f, 0.01f));
+			m_Transitioners.push_back(new CTimeLine<Vec4f>(&m_CurrColour, &m_DesiredColour, 5));
+			m_DesiredWidth *= 5;
+			m_Transitioners.push_back(new CTimeLine<float>(&m_CurrWidth, &m_DesiredWidth, 5));
 			m_Transitioners.push_back(new CPerlin<Vec3f>(&m_CurrPos));
-			m_Transitioners.push_back(new CMultiplier<Vec3f>(&m_CurrPos, Vec3f(1.01f, 0.99f, 1.02f)));
+			//m_Transitioners.push_back(new CMultiplier<Vec3f>(&m_CurrPos, Vec3f(1.02f, 0.99f, 1.0f)));
 		}
 		break;
 	default:

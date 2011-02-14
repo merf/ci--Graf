@@ -18,7 +18,7 @@ using namespace std;
 
 using namespace mowa::sgui;
 
-const bool WRITE_FRAMES = true;
+const bool WRITE_FRAMES = false;
 
 Vec3f light_pos;
 
@@ -50,7 +50,7 @@ public:
 void GrafAppApp::setup()
 {	
 	setWindowSize(1280, 1024);
-	setWindowSize(640, 480);
+	//setWindowSize(640, 480);
 	m_Cam.lookAt(Vec3f(0, 0, -3), Vec3f::zero(), Vec3f(0, -1, 0));
 	m_Cam.setNearClip(0.00001f);
 
@@ -73,6 +73,7 @@ void GrafAppApp::setup()
 	gui->lightColor = ColorA(1, 1, 0, 1);	
 	gui->addLabel("CONTROLS");
 	gui->addParam("BrushSize", &GrafDrawingParams::g_BrushSize, 0, 0.1f, GrafDrawingParams::g_BrushSize);
+	gui->addParam("UpdateSpeed", &GrafDrawingParams::g_UpdateSpeed, 0, 0.5f, GrafDrawingParams::g_UpdateSpeed);
 }
 
 //*************************************************************************************************************************
@@ -163,11 +164,6 @@ void GrafAppApp::draw()
 	gl::enableDepthWrite();
 	gl::color(ColorA(1,1,1,1));
 	gl::popMatrices();
-
-
-	std::string home = getHomeDirectory();
-
-	console() << home;
 
 	if(WRITE_FRAMES)
 	{

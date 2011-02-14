@@ -21,6 +21,7 @@ float GrafDrawingParams::g_MinSpeed			= 0.1f;
 float GrafDrawingParams::g_BrushSize		= 0.05f;
 float GrafDrawingParams::g_CircleSubdivs	= 8;
 float GrafDrawingParams::g_SplineSubdivs	= 5;
+float GrafDrawingParams::g_UpdateSpeed		= 0.05f;
 
 
 //*******************************************************************************************************
@@ -512,7 +513,7 @@ void CTag::Draw()
 
 			if(!points[p3]->IsActive())
 			{
-				break;
+				//break;
 			}
 		}
 	}

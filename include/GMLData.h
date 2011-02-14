@@ -19,6 +19,7 @@ struct GrafDrawingParams
 	static float g_BrushSize;
 	static float g_SplineSubdivs;
 	static float g_CircleSubdivs;
+	static float g_UpdateSpeed;
 };
 
 //---------------------------------------------------------------------------------------------------------
