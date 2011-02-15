@@ -40,7 +40,7 @@ public:
 	void								Reset();
 	void								Clear() { m_Points.clear(); }
 
-	void								Update();
+	void								Update(float update_time);
 
 	bool								HasActiveTransitions();
 	void								ResetTransition(ETransitionType type);
@@ -64,6 +64,7 @@ public:
 	const std::string&					GetArtist() const { return m_Artist; }
 
 	ETransitionType						GetCurrTransition() const { return m_CurrTransition; }
+	void								ResetTransition(ETransitionType type);
 	
 private:
 	void								ParseXML(ci::XmlTree& xml);

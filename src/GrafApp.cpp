@@ -5,7 +5,7 @@
 #include "cinder/Utilities.h"
 
 #include "cinder/Camera.h"
-#include "cinder/Arcball.h"
+#include "cinder/MayaCamUI.h"
 
 #include "GMLData.h"
 #include "TagCollection.h"
@@ -41,7 +41,7 @@ public:
 	
 	params::InterfaceGl		m_Params;
 	CameraPersp				m_Cam;
-	Arcball					mArcball;
+	MayaCamUI				m_MayaCam;
 
 	SimpleGUI* gui;
 };
@@ -50,14 +50,25 @@ public:
 void GrafAppApp::setup()
 {	
 	setWindowSize(1280, 1024);
-	//setWindowSize(640, 480);
-	m_Cam.lookAt(Vec3f(0, 0, -3), Vec3f::zero(), Vec3f(0, -1, 0));
-	m_Cam.setNearClip(0.00001f);
+	setWindowSize(640, 480);
+
+	m_Cam.setPerspective(45.0f, getWindowAspectRatio(), 0.1f, 100.0f);
+	m_Cam.setCenterOfInterestPoint(Vec3f( 0, 0, 0 ));
+	//Vec3f p = m_Cam.getEyePoint();
+	//m_Cam.setEyePoint(Vec3f(10,10,10));
+
+	m_Cam.lookAt(Vec3f(0, 0, -5), Vec3f::zero(), Vec3f(0, -1, 0));
+	//m_Cam.setNearClip(0.00001f);
+	m_Cam.setCenterOfInterestPoint(Vec3f( 0, 0, 0 ));
+
+
+	m_MayaCam.setCurrentCam(m_Cam);
+
 
 	// Arcball
-	mArcball.setWindowSize( getWindowSize() );
-	mArcball.setCenter( getWindowCenter() );
-	mArcball.setRadius( 150 );
+	//mArcball.setWindowSize( getWindowSize() );
+	//mArcball.setCenter( getWindowCenter() );
+	//mArcball.setRadius( 150 );
 	//mArcball.setConstraintAxis(Vec3f(0.1,1,0));
 
 
@@ -67,35 +78,41 @@ void GrafAppApp::setup()
 
 	m_Rotation.setToIdentity();
 	
-	light_pos = Vec3f(0, 800, 3000);
+	light_pos = Vec3f(0, 80, -30);
 
 	gui = new SimpleGUI(this);
 	gui->lightColor = ColorA(1, 1, 0, 1);	
 	gui->addLabel("CONTROLS");
-	gui->addParam("BrushSize", &GrafDrawingParams::g_BrushSize, 0, 0.1f, GrafDrawingParams::g_BrushSize);
+	gui->addQuickParam("BrushSize", &GrafDrawingParams::g_BrushSize);
 	gui->addParam("UpdateSpeed", &GrafDrawingParams::g_UpdateSpeed, 0, 0.5f, GrafDrawingParams::g_UpdateSpeed);
 }
 
 //*************************************************************************************************************************
 void GrafAppApp::mouseDown(MouseEvent event)
 {
-	Vec2i P = event.getPos();
-	P.y = getWindowHeight() - P.y;
-	mArcball.mouseDown(P);
+	m_MayaCam.mouseDown(event.getPos());
 }
 
 //*************************************************************************************************************************
 void GrafAppApp::mouseDrag(MouseEvent event)
-{	
-	Vec2i P = event.getPos();
-	P.y = getWindowHeight() - P.y;
-	mArcball.mouseDrag(P);
+{
+	m_MayaCam.mouseDrag(event.getPos(), event.isLeftDown(), event.isMiddleDown(), event.isRightDown());
 }
 
 //*************************************************************************************************************************
 void GrafAppApp::keyDown(KeyEvent event)
 {
-	m_TagCollection.NextTag();
+	switch(event.getCode())
+	{
+	case KeyEvent::KEY_ESCAPE:
+		quit();
+		break;
+	case KeyEvent::KEY_f:
+		setFullScreen(!isFullScreen());
+		break;
+	default:
+		m_TagCollection.FadeOut();
+	}
 }
 
 //*************************************************************************************************************************
@@ -117,9 +134,9 @@ void GrafAppApp::update()
 //*************************************************************************************************************************
 void GrafAppApp::draw()
 {
-	//glEnable( GL_LIGHTING );
-	glEnable( GL_LIGHT0 );
-	//glEnable(GL_CULL_FACE);
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	glEnable(GL_CULL_FACE);
 	//glCullFace(GL_FRONT);
 	//glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 
@@ -127,11 +144,25 @@ void GrafAppApp::draw()
 	
 	Matrix44f trans;
 	
-	gl::setMatrices(m_Cam);
-	gl::rotate(mArcball.getQuat());	
+	//gl::setMatrices(m_Cam);
+	//gl::rotate(mArcball.getQuat());	
+
 	
 	GLfloat light_position[] = { light_pos.x, light_pos.y, light_pos.z, true };
 	glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+
+	GLfloat ambient[] = { 0.2f, 0.2f, 0.5f, 1.0f };
+	GLfloat diffuse[] = { 0.5f, 0.2f, 0.2f, 1.0f };
+	//glLightModelfv(GL_LIGHT_MODEL_AMBIENT, global_ambient);
+
+	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient); 
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse); 
+
+	//ci::ColorA color( CM_HSV, 0.0f, 1.0f, 1.0f, 1.0f );
+	//glMaterialfv( GL_FRONT, GL_DIFFUSE,	color );
+
+	gl::setMatrices(m_MayaCam.getCamera());
+
 
 	// clear out the window with black
 	gl::clear(Color(1,1,1));
@@ -144,6 +175,9 @@ void GrafAppApp::draw()
 	
 	glPopMatrix();
 	
+
+
+	glDisable(GL_LIGHTING);
 	
 	//params::InterfaceGl::draw();
 	gui->draw();
@@ -157,7 +191,7 @@ void GrafAppApp::draw()
 	glColor3f(1,1,1);
 	float text_size = 24;
 	float padding = text_size * 0.25f;
-	gl::drawString(m_TagCollection.GetCurrTag().GetArtist(), Vec2f(padding, getWindowHeight() - text_size - padding), ColorA(0, 0, 0, 0.5), Font("Impact", text_size));
+	gl::drawStringRight(m_TagCollection.GetCurrTag().GetArtist(), Vec2f(getWindowWidth() - padding, getWindowHeight() - text_size - padding), ColorA(0, 0, 0, 0.5), Font("Impact", text_size));
 
 	gl::disableAlphaBlending();
 	gl::enableDepthRead();

@@ -18,8 +18,8 @@ float GrafDrawingParams::g_RotationAmount	= 0.4f;
 float GrafDrawingParams::g_ZExtrusion		= 100.0f;
 float GrafDrawingParams::g_MaxSpeed			= 20;
 float GrafDrawingParams::g_MinSpeed			= 0.1f;
-float GrafDrawingParams::g_BrushSize		= 0.05f;
-float GrafDrawingParams::g_CircleSubdivs	= 8;
+float GrafDrawingParams::g_BrushSize		= 0.1f;
+float GrafDrawingParams::g_CircleSubdivs	= 10;
 float GrafDrawingParams::g_SplineSubdivs	= 5;
 float GrafDrawingParams::g_UpdateSpeed		= 0.05f;
 
@@ -113,7 +113,7 @@ void CTagStroke::ComputeWidths()
 			float time = fabsf((*it)->GetTime() - prev_time);
 			Vec3f dir = (*it)->GetPos() - prev_point;
 			(*it)->SetDesiredWidth(dir.length() / time);
-			(*it)->SetDesiredWidth(dir.length());
+			//(*it)->SetDesiredWidth(dir.length());
 			if((*it)->GetDesiredWidth() > max_width)
 			{
 				max_width = (*it)->GetDesiredWidth();
@@ -137,7 +137,9 @@ void CTagStroke::ComputeWidths()
 		float one_on_max_width = 1.0f / max_width;
 		for(TPointList::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 		{
-			(*it)->SetDesiredWidth((*it)->GetDesiredWidth() * one_on_max_width);
+			float w = (*it)->GetDesiredWidth() * one_on_max_width;
+			w = pow(w,2);
+			(*it)->SetDesiredWidth(w);
 		}
 	}
 }
@@ -224,11 +226,11 @@ void CTagStroke::Normalise()
 }
 
 //*******************************************************************************************************
-void CTagStroke::Update()
+void CTagStroke::Update(float update_time)
 {
 	for(TPointList::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 	{
-		(*it)->Update();
+		(*it)->Update(update_time);
 	}
 }
 
@@ -252,7 +254,10 @@ void CTagStroke::ResetTransition(ETransitionType type)
 {
 	for(TPointList::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 	{
-		(*it)->SetUpTransitioners(type);
+		if(it != m_Points.begin())
+		{
+			(*it)->SetUpTransitioners(type);
+		}
 	}
 }
 
@@ -366,11 +371,29 @@ void CTag::ParseXML(XmlTree& xml_tree)
 }
 
 //*******************************************************************************************************
+void CTag::ResetTransition(ETransitionType type)
+{
+	m_CurrTransition = type;
+
+	for(u32 i_stroke=0; i_stroke<m_Strokes.size(); ++i_stroke)
+	{
+		m_Strokes[i_stroke]->ResetTransition(m_CurrTransition);
+	}
+
+}
+
+//*******************************************************************************************************
 void CTag::Update()
 {
 	for(u32 i_stroke=0; i_stroke<m_Strokes.size(); ++i_stroke)
 	{
-		m_Strokes[i_stroke]->Update();
+		float update_time = GrafDrawingParams::g_UpdateSpeed;
+		if(m_CurrTransition == TRANSITION_OUT)
+		{
+			update_time *= 5;
+		}
+
+		m_Strokes[i_stroke]->Update(update_time);
 	}
 
 	switch(m_CurrTransition)
@@ -390,13 +413,7 @@ void CTag::Update()
 
 			if(!active_transitions)
 			{
-				//TODO - really this should go to 'wait'
-				m_CurrTransition = TRANSITION_OUT;
-
-				for(u32 i_stroke=0; i_stroke<m_Strokes.size(); ++i_stroke)
-				{
-					m_Strokes[i_stroke]->ResetTransition(TRANSITION_OUT);
-				}
+				ResetTransition(TRANSITION_WAIT);
 			}
 		}
 		break;
@@ -415,7 +432,7 @@ void CTag::Update()
 
 			if(!active_transitions)
 			{
-				m_CurrTransition = TRANSITION_END;
+				ResetTransition(TRANSITION_END);
 			}
 		}
 		break;
@@ -518,8 +535,12 @@ void CTag::Draw()
 		}
 	}
 
-	gl::enableWireframe();
+	//gl::enableWireframe();
 	gl::enableAlphaBlending();
+	//gl::enableAdditiveBlending();
+	//glBlendFunc(GL_SRC_ALPHA, GL_ZERO);
+	//gl::disableDepthRead();
+	//gl::disableDepthWrite();
 
 	gl::draw(tri_mesh);
 
@@ -540,7 +561,28 @@ void CTag::AddSegmentVertices(ci::TriMesh& tri_mesh, const ci::Vec3f& point, flo
 
 		tri_mesh.appendVertex(final_point);
 		float f = i / (float)subdivs;
-		tri_mesh.appendColorRGBA(ColorA(colour.x, colour.y, colour.z, colour.w));
+
+		Vec3f normal = final_point - point;
+		normal.normalize();
+
+		tri_mesh.appendNormal(normal);
+
+		//gl::drawLine(final_point, point);
+		
+		ci::Vec4f new_colour = colour;
+
+		new_colour = Vec4f(1,0,0,0);
+		//new_colour = ci::Vec4f(1,0,0,0) + colour;
+		//if(i%4 == 0 || i%4==1)
+		//	new_colour = ci::Vec4f(0,0,1,0) + colour;
+
+		//new_colour = ci::Vec4f(1,1,1,1);
+
+		//colour = Vec4f(1,0,0,1);
+
+		//glMaterialfv( GL_BACK, GL_DIFFUSE,	colour);
+
+		tri_mesh.appendColorRGBA(ColorA(new_colour.x, new_colour.y, new_colour.z, new_colour.w));
 		//tri_mesh.appendColorRGB(Color(f, 0, 1-f));
 	}
 }

@@ -13,11 +13,12 @@ public:
 	~CTagCollection();
 
 	void					NextTag();
+	void					FadeOut();
 	void					ReadTagData();
 	
 	void					Update();
 	void					Draw();
-	const CTag&			GetCurrTag();
+	const CTag&				GetCurrTag();
 	
 private:
 	unsigned int			m_CurrTag;

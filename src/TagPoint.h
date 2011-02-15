@@ -117,11 +117,13 @@ template <class T>
 class CPerlin : public CTemplateTransitionerBase<T>
 {
 public:
-	CPerlin(T* p_current) 
+	CPerlin(T* p_current, float scale, T init_vel, Vec3fArg pos) 
 	:
 	CTemplateTransitionerBase<T>(p_current, p_current),
 	m_Time(0),
-	m_Vel(0,0,0)
+	m_Scale(scale),
+	m_Vel(init_vel),
+	m_Pos(pos)
 	{
 	}
 	
@@ -131,8 +133,10 @@ public:
 	static ci::Perlin m_Perlin;
 	
 protected:
-	float	m_Time;
-	T		m_Vel;
+	float		m_Time;
+	float		m_Scale;
+	T			m_Vel;
+	ci::Vec3f	m_Pos;
 };
 
 //---------------------------------------------------------------------------------------------------------
@@ -175,7 +179,7 @@ public:
 
 	bool			IsActive() const { return m_Timer > m_Time; }
 
-	void			Update();
+	void			Update(float update_time);
 	void			Reset();
 	bool			HasActiveTransitions();
 
