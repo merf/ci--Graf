@@ -11,6 +11,9 @@
 
 #include "Spline.h"
 
+#include "Physics/Simulation.h"
+
+
 using namespace ci;
 using namespace std;
 
@@ -26,7 +29,7 @@ float GrafDrawingParams::g_UpdateSpeed		= 0.05f;
 
 //*******************************************************************************************************
 //*******************************************************************************************************
-CTagStroke::CTagStroke(const XmlTree& stroke_xml)
+CTagStroke::CTagStroke(CSimulation* p_phys, const XmlTree& stroke_xml)
 {
 	for(XmlTree::ConstIter stroke_point = stroke_xml.begin(); stroke_point != stroke_xml.end(); ++stroke_point)
 	{
@@ -56,7 +59,7 @@ CTagStroke::CTagStroke(const XmlTree& stroke_xml)
 			}
 		}
 
-		CTagPoint* stroke_data_point = new CTagPoint(x, y, -z, t);
+		CTagPoint* stroke_data_point = new CTagPoint(p_phys, x, y, -z, t);
 		stroke_data_point->Reset();
 		m_Points.push_back(stroke_data_point);
 	}
@@ -73,7 +76,7 @@ CTagStroke::CTagStroke(const XmlTree& stroke_xml)
 		for(int i=0; i<num_pts; ++i)
 		{
 			Vec3f p1 = Vec3f(cosf(circle_inc*i), -sinf(circle_inc*i), (float)i) * width;
-			m_Points.push_back(new CTagPoint(p1.x, p1.y, (float)i, (float)i));
+			m_Points.push_back(new CTagPoint(p_phys, p1.x, p1.y, (float)i, (float)i));
 			width *= 1.1f;
 		}
 	}
@@ -113,7 +116,7 @@ void CTagStroke::ComputeWidths()
 			float time = fabsf((*it)->GetTime() - prev_time);
 			Vec3f dir = (*it)->GetPos() - prev_point;
 			(*it)->SetDesiredWidth(dir.length() / time);
-			//(*it)->SetDesiredWidth(dir.length());
+			(*it)->SetDesiredWidth(dir.length());
 			if((*it)->GetDesiredWidth() > max_width)
 			{
 				max_width = (*it)->GetDesiredWidth();
@@ -142,6 +145,22 @@ void CTagStroke::ComputeWidths()
 			(*it)->SetDesiredWidth(w);
 		}
 	}
+}
+
+//*******************************************************************************************************
+void CTagStroke::AttachSprings()
+{
+	//if(m_Points.size() > 2)
+	//{
+	//	TPointList::iterator it1 = m_Points.begin();
+	//	TPointList::iterator it2 = it1+1;
+	//	TPointList::iterator it3 = it2+1;
+
+	//	for(; it3 != m_Points.end(); ++it1, ++it1, ++it2)
+	//	{
+	//		(*it1)->SetupPhysicsObjects(**it2, **it3);
+	//	}
+	//}
 }
 
 ////*******************************************************************************************************
@@ -300,6 +319,10 @@ CTag::CTag(std::string file_path)
 :
 m_CurrTransition(TRANSITION_IN)
 {
+	static float time_step = 1.0f/30.0f;
+	mp_Phys = new CSimulation(time_step);
+	mp_Phys->AddGlobalForce(new CGravity(ci::Vec3f(0, 9.81f, 0)));
+
 	XmlTree doc(loadFile(file_path));
 	ParseXML(doc);
 
@@ -310,6 +333,7 @@ m_CurrTransition(TRANSITION_IN)
 		(*it)->ComputeWidths();
 		//it->ComputeTangents();
 		//it->ComputePTF();
+		(*it)->AttachSprings();
 	}
 }
 
@@ -320,6 +344,8 @@ CTag::~CTag()
 	{
 		delete *it;
 	}
+
+	delete mp_Phys;
 }
 
 //*******************************************************************************************************
@@ -361,7 +387,7 @@ void CTag::ParseXML(XmlTree& xml_tree)
 					const std::list<XmlTree>& strokes = item->getChildren();
 					for(std::list<XmlTree>::const_iterator stroke_it = strokes.begin(); stroke_it != strokes.end(); ++stroke_it)
 					{
-						CTagStroke* stroke = new CTagStroke(*stroke_it);
+						CTagStroke* stroke = new CTagStroke(mp_Phys, *stroke_it);
 						m_Strokes.push_back(stroke);
 					}
 				}
@@ -444,6 +470,12 @@ void CTag::Update()
 //*******************************************************************************************************
 void CTag::Draw()
 {
+	if(true)
+	{
+		mp_Phys->Draw();
+		return;
+	}
+
 	ci::TriMesh tri_mesh;
 
 	for(u32 i_stroke=0; i_stroke<m_Strokes.size(); ++i_stroke)
@@ -535,10 +567,14 @@ void CTag::Draw()
 		}
 	}
 
+	//glEnable(GL_COLOR_MATERIAL);
+	//glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+	//glColor3f(1,1,1);
+
 	//gl::enableWireframe();
-	gl::enableAlphaBlending();
+	//gl::enableAlphaBlending();
 	//gl::enableAdditiveBlending();
-	//glBlendFunc(GL_SRC_ALPHA, GL_ZERO);
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	//gl::disableDepthRead();
 	//gl::disableDepthWrite();
 
@@ -571,7 +607,7 @@ void CTag::AddSegmentVertices(ci::TriMesh& tri_mesh, const ci::Vec3f& point, flo
 		
 		ci::Vec4f new_colour = colour;
 
-		new_colour = Vec4f(1,0,0,0);
+		//new_colour = Vec4f(1,0,0,0);
 		//new_colour = ci::Vec4f(1,0,0,0) + colour;
 		//if(i%4 == 0 || i%4==1)
 		//	new_colour = ci::Vec4f(0,0,1,0) + colour;

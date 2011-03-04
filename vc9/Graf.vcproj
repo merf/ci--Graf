@@ -219,6 +219,42 @@
 				RelativePath="..\src\types.h"
 				>
 			</File>
+			<Filter
+				Name="Physics"
+				>
+				<File
+					RelativePath="..\src\Physics\ForceGenerator.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\src\Physics\ForceGenerator.h"
+					>
+				</File>
+				<File
+					RelativePath="..\src\Physics\Integrator.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\src\Physics\Integrator.h"
+					>
+				</File>
+				<File
+					RelativePath="..\src\Physics\SimObject.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\src\Physics\SimObject.h"
+					>
+				</File>
+				<File
+					RelativePath="..\src\Physics\Simulation.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\src\Physics\Simulation.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"

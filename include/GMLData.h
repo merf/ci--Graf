@@ -22,20 +22,22 @@ struct GrafDrawingParams
 	static float g_UpdateSpeed;
 };
 
+class CSimulation;
 //---------------------------------------------------------------------------------------------------------
 class CTagStroke
 {
 public:
-	CTagStroke(const ci::XmlTree& stroke_xml);
+	CTagStroke(CSimulation* p_phys, const ci::XmlTree& stroke_xml);
 	~CTagStroke();
 
 	typedef std::vector <CTagPoint*> TPointList;
 
 	const TPointList&					GetData() const { return m_Points; }
-	void								ComputeWidths();
 	void								ComputeTangents();
 	void								ComputePTF();
 	void								Normalise();
+	void								ComputeWidths();
+	void								AttachSprings();
 
 	void								Reset();
 	void								Clear() { m_Points.clear(); }
@@ -83,4 +85,7 @@ private:
 	TStrokeList							m_Strokes;
 
 	ETransitionType						m_CurrTransition;
+
+
+	CSimulation*						mp_Phys;
 };

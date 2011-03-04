@@ -22,6 +22,13 @@ const bool WRITE_FRAMES = false;
 
 Vec3f light_pos;
 
+float eye_z = 4;
+
+float fog_start = eye_z;
+float fog_end = eye_z + 3;
+float fog_density = 0.3f;
+ColorA fog_colour(1,1,1,1);
+
 //*************************************************************************************************************************
 //*************************************************************************************************************************
 class GrafAppApp : public AppBasic 
@@ -57,7 +64,7 @@ void GrafAppApp::setup()
 	//Vec3f p = m_Cam.getEyePoint();
 	//m_Cam.setEyePoint(Vec3f(10,10,10));
 
-	m_Cam.lookAt(Vec3f(0, 0, -5), Vec3f::zero(), Vec3f(0, -1, 0));
+	m_Cam.lookAt(Vec3f(0, 0, -eye_z), Vec3f::zero(), Vec3f(0, -1, 0));
 	//m_Cam.setNearClip(0.00001f);
 	m_Cam.setCenterOfInterestPoint(Vec3f( 0, 0, 0 ));
 
@@ -78,13 +85,19 @@ void GrafAppApp::setup()
 
 	m_Rotation.setToIdentity();
 	
-	light_pos = Vec3f(0, 80, -30);
+	light_pos = Vec3f(0, 80, -80);
 
 	gui = new SimpleGUI(this);
 	gui->lightColor = ColorA(1, 1, 0, 1);	
 	gui->addLabel("CONTROLS");
 	gui->addQuickParam("BrushSize", &GrafDrawingParams::g_BrushSize);
 	gui->addParam("UpdateSpeed", &GrafDrawingParams::g_UpdateSpeed, 0, 0.5f, GrafDrawingParams::g_UpdateSpeed);
+	gui->addLabel("FOG");
+	gui->addQuickParam("Start", &fog_start);
+	gui->addQuickParam("End", &fog_end);
+	gui->addQuickParam("Density", &fog_density);
+	gui->addParam("Colour", &fog_colour, fog_colour, CM_HSV);
+
 }
 
 //*************************************************************************************************************************
@@ -110,8 +123,12 @@ void GrafAppApp::keyDown(KeyEvent event)
 	case KeyEvent::KEY_f:
 		setFullScreen(!isFullScreen());
 		break;
-	default:
+	case KeyEvent::KEY_r:
+		m_TagCollection.ResetCurrent();
+		break;
+	case KeyEvent::KEY_n:
 		m_TagCollection.FadeOut();
+		break;
 	}
 }
 
@@ -137,6 +154,17 @@ void GrafAppApp::draw()
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
 	glEnable(GL_CULL_FACE);
+
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_FOG);
+	glFogi(GL_FOG_MODE, GL_LINEAR);
+	//GLfloat fogColor[4] = {1.0f, 1.0f, 1.0f, 1.0};
+	glFogfv(GL_FOG_COLOR, fog_colour);
+	glFogf(GL_FOG_DENSITY, fog_density);
+	glHint(GL_FOG_HINT, GL_NICEST);
+	glFogf(GL_FOG_START, fog_start);
+	glFogf(GL_FOG_END, fog_end);
+
 	//glCullFace(GL_FRONT);
 	//glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 
@@ -145,7 +173,8 @@ void GrafAppApp::draw()
 	Matrix44f trans;
 	
 	//gl::setMatrices(m_Cam);
-	//gl::rotate(mArcball.getQuat());	
+	//gl::rotate(mArcball.getQuat());
+	gl::setMatrices(m_MayaCam.getCamera());
 
 	
 	GLfloat light_position[] = { light_pos.x, light_pos.y, light_pos.z, true };
@@ -158,19 +187,12 @@ void GrafAppApp::draw()
 	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient); 
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse); 
 
-	//ci::ColorA color( CM_HSV, 0.0f, 1.0f, 1.0f, 1.0f );
-	//glMaterialfv( GL_FRONT, GL_DIFFUSE,	color );
-
-	gl::setMatrices(m_MayaCam.getCamera());
+	ci::ColorA color( CM_HSV, 0.0f, 1.0f, 1.0f, 1.0f );
+	glMaterialfv( GL_FRONT, GL_DIFFUSE,	color );
 
 
-	// clear out the window with black
-	gl::clear(Color(1,1,1));
-	//gl::clear(Color(0,0,0));
+	gl::clear(fog_colour);
 
-	glColor3f(1,1,1);
-	glColor3f(0,0,0);
-	
 	m_TagCollection.Draw();	
 	
 	glPopMatrix();

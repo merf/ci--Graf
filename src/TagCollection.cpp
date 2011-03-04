@@ -47,6 +47,16 @@ void CTagCollection::FadeOut()
 }
 
 //*************************************************************************************************************************
+void CTagCollection::ResetCurrent()
+{
+	if(m_CurrTag < m_TagData.size())
+	{
+		m_TagData[m_CurrTag]->Reset();
+		m_TagData[m_CurrTag]->ResetTransition(TRANSITION_IN);
+	}
+}
+
+//*************************************************************************************************************************
 void CTagCollection::NextTag() 
 { 
 	m_CurrTag++; 

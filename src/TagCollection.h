@@ -13,6 +13,7 @@ public:
 	~CTagCollection();
 
 	void					NextTag();
+	void					ResetCurrent();
 	void					FadeOut();
 	void					ReadTagData();
 	

@@ -1,7 +1,65 @@
 #pragma once
 #include "types.h"
+#include "Physics/SimObject.h"
 #include <list>
 
+#include "cinder/Vector.h"
+
+enum ETransitionType
+{
+	TRANSITION_IN,
+	TRANSITION_WAIT,
+	TRANSITION_OUT,
+	TRANSITION_END,
+};
+
+class CSimulation;
+
+class CTagPoint
+{
+public:
+	CTagPoint(CSimulation* p_phys, float x, float y, float z, float t);
+	~CTagPoint();
+
+	void			Update(float delta_time) { m_ElapsedTime += delta_time; }
+
+	//keeping this interface for now...
+	void			SetUpTransitioners(int type) {}
+	bool			HasActiveTransitions() { return false; }
+
+	void			SetupPhysicsObjects(CTagPoint& p1, CTagPoint& p2);
+	TSimObjectPtr&	GetSimObject() { return mp_SimObj; }
+
+	void			SetPos(Vec3fArg new_pos) { mp_SimObj->SetCurrPos(new_pos); }
+	Vec3fArg		GetPos() { return mp_SimObj->GetCurrPos(); }
+	Vec3fArg		GetDesiredPos() { return mp_SimObj->GetCurrPos(); }
+
+	//TODO - this width will be modified by the tension of the attached springs...
+	float			GetWidth() const { return m_DefaultWidth; }
+	float			GetDesiredWidth() const { return m_DefaultWidth; }
+	void			SetDesiredWidth(float width) { m_DefaultWidth = width; }
+
+	const ci::Vec4f& GetColour() const { return m_Colour; }
+
+	float			GetTime() const { return m_Time; }
+	bool			IsActive() const { return m_ElapsedTime > m_Time; }
+
+
+	void			Reset() {}
+
+private:
+	ci::Vec4f			m_Colour;
+	float				m_DefaultWidth;
+
+	//The time in the tag that this point is placed.
+	float				m_Time;
+	float				m_ElapsedTime;
+
+	TSimObjectPtr		mp_SimObj;
+	CSimulation*		mp_Phys;
+};
+
+/*
 #include "cinder/Perlin.h"
 
 //We want to be able to specify different ways that points can come into/outof existence
@@ -185,6 +243,8 @@ public:
 
 	void			SetUpTransitioners(ETransitionType type);
 	void			ClearTransitioners();
+
+	void			AddSprings(CTagPoint& next_point, CTagPoint& next_to_next_point);
 private:
 	ci::Vec3f		m_CurrPos;
 	ci::Vec3f		m_DesiredPos;
@@ -201,3 +261,6 @@ private:
 
 	float			m_Timer;
 };
+
+
+*/

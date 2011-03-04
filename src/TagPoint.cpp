@@ -2,10 +2,43 @@
 #include "GMLData.h"
 #include "cinder/app/AppBasic.h"
 
+#include "Physics/Simulation.h"
+
 #include <math.h>
 
 using namespace ci;
 
+//*******************************************************************************************************
+//*******************************************************************************************************
+CTagPoint::CTagPoint(CSimulation* p_phys, float x, float y, float z, float t)
+: 
+m_Time(t), 
+m_DefaultWidth(0),
+m_ElapsedTime(0),
+mp_Phys(p_phys)
+{
+	m_Colour = Vec4f(0,0,0,1);
+	//Reset();
+
+	mp_SimObj = TSimObjectPtr(new CSimObject(SIM_OBJECT_STATIC, 1, ci::Vec3f(x,y,z)));
+	mp_Phys->AddSimObject(&(*mp_SimObj));
+}
+
+//*******************************************************************************************************
+CTagPoint::~CTagPoint()
+{
+	mp_Phys->RemoveSimObject(mp_SimObj);
+	mp_SimObj = NULL;
+	//mp_SimObj.reset();
+}
+
+//*******************************************************************************************************
+void CTagPoint::SetupPhysicsObjects(CTagPoint& p1, CTagPoint& p2)
+{
+
+}
+
+/*
 template<class T> Perlin CPerlin<T>::m_Perlin = Perlin();
 
 float GetLengthSq(float f)
@@ -245,9 +278,9 @@ void CTagPoint::SetUpTransitioners(ETransitionType type)
 			m_Transitioners.push_back(new CTimeLine<float>(&m_CurrWidth, &m_DesiredWidth, 1));
 
 			
-			//m_CurrPos.set(m_DesiredPos * Vec3f(1, 0, 0) + Vec3f(3, 0, 10));
+			m_CurrPos.set(m_DesiredPos * Vec3f(1, 0, 0) + Vec3f(3, 0, 10));
 			//m_CurrPos.set(m_DesiredPos * Vec3f(1, 0, 1));
-			//m_Transitioners.push_back(new CBouncer<Vec3f>(&m_CurrPos, &m_DesiredPos, Vec3f::zero(), 0.03f, 0.85f, 0.01f));
+			m_Transitioners.push_back(new CBouncer<Vec3f>(&m_CurrPos, &m_DesiredPos, Vec3f::zero(), 0.03f, 0.85f, 0.01f));
 			//m_Transitioners.push_back(new CLerper<Vec3f>(&m_CurrPos, &m_DesiredPos, 0.02f, 0.01f));
 
 			m_CurrColour = Vec4f(0,0,0,0);
@@ -259,16 +292,17 @@ void CTagPoint::SetUpTransitioners(ETransitionType type)
 		}
 	case TRANSITION_OUT:
 		{
-			m_DesiredColour = Vec4f(0,0,0,0);
-			m_Transitioners.push_back(new CTimeLine<Vec4f>(&m_CurrColour, &m_DesiredColour, 10));
-			m_DesiredWidth *= 2;
-			//m_Transitioners.push_back(new CTimeLine<float>(&m_CurrWidth, &m_DesiredWidth, 5));
-			m_Transitioners.push_back(new CPerlin<Vec3f>(&m_CurrPos, 0.01f, Vec3f(0,0,0), m_CurrPos));
-			m_Transitioners.push_back(new CPerlin<float>(&m_CurrWidth, 0.01f, 0, m_CurrPos));
-			m_Transitioners.push_back(new CMultiplier<Vec3f>(&m_CurrPos, Vec3f(1.002f, 0.999f, 1.0f)));
+			//m_DesiredColour = Vec4f(0,0,0,0);
+			//m_Transitioners.push_back(new CTimeLine<Vec4f>(&m_CurrColour, &m_DesiredColour, 10));
+			m_DesiredWidth = 0;
+			m_Transitioners.push_back(new CTimeLine<float>(&m_CurrWidth, &m_DesiredWidth, 5));
+			//m_Transitioners.push_back(new CPerlin<Vec3f>(&m_CurrPos, 0.01f, Vec3f(0,0,0), m_CurrPos));
+			//m_Transitioners.push_back(new CPerlin<float>(&m_CurrWidth, 0.01f, 0, m_CurrPos));
+			//m_Transitioners.push_back(new CMultiplier<Vec3f>(&m_CurrPos, Vec3f(1.002f, 0.999f, 1.0f)));
 		}
 		break;
 	default:
 		break;
 	}
 }
+*/
