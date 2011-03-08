@@ -29,7 +29,7 @@ void CSimulation::Update(float delta_time)
 			for(TForceGeneratorList::iterator it = m_GlobalForces.begin(); it != m_GlobalForces.end(); ++it)
 			{
 				(*it)->ApplyGlobalForce(**sim_obj_it);
-			}
+			}		
 		}
 	}
 	
@@ -38,7 +38,6 @@ void CSimulation::Update(float delta_time)
 		if((*sim_obj_it)->GetType() == SIM_OBJECT_DYNAMIC)
 		{
 			ci::Vec3f acceleration = (*sim_obj_it)->GetResultantForce() / (*sim_obj_it)->GetMass();
-			
 			m_Integrator->Integrate(acceleration, **sim_obj_it);
 		}
 
@@ -55,6 +54,13 @@ void CSimulation::Draw()
 		
 		float size = 10.0f;
 		sim_ob.GetType() == SIM_OBJECT_DYNAMIC ? glColor3f(0,1,0) : glColor3f(1,0,0);
+
+		ci::ColorA color( CM_RGB, 0.0f, 1.0f, 0.0f, 1.0f );
+		if(sim_ob.GetType() == SIM_OBJECT_STATIC)
+		{
+			ci::ColorA color( CM_RGB, 1.0f, 0.0f, 0.0f, 1.0f );
+		}
+		glMaterialfv( GL_FRONT, GL_DIFFUSE,	color );
 
 		size = 0.02f;
 		gl::drawCube(pos, Vec3f(size, size, size));

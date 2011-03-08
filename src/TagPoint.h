@@ -1,6 +1,7 @@
 #pragma once
 #include "types.h"
 #include "Physics/SimObject.h"
+#include "Physics/ForceGenerator.h"
 #include <list>
 
 #include "cinder/Vector.h"
@@ -27,10 +28,10 @@ public:
 	void			SetUpTransitioners(int type) {}
 	bool			HasActiveTransitions() { return false; }
 
-	void			SetupPhysicsObjects(CTagPoint& p1, CTagPoint& p2);
+	void			SetupPhysicsObjects(CTagPoint* p1, CTagPoint* p2);
 	TSimObjectPtr&	GetSimObject() { return mp_SimObj; }
 
-	void			SetPos(Vec3fArg new_pos) { mp_SimObj->SetCurrPos(new_pos); }
+	void			SetPos(Vec3fArg new_pos) { mp_SimObj->SetCurrPos(new_pos); mp_SimObj->SetPrevPos(new_pos); }
 	Vec3fArg		GetPos() { return mp_SimObj->GetCurrPos(); }
 	Vec3fArg		GetDesiredPos() { return mp_SimObj->GetCurrPos(); }
 
@@ -55,7 +56,14 @@ private:
 	float				m_Time;
 	float				m_ElapsedTime;
 
+	TSimObjectPtr		mp_StaticSimObj;
 	TSimObjectPtr		mp_SimObj;
+	
+	TSpringPtr			mp_StaticSpring;
+	TSpringPtr			mp_SpringA;
+	TSpringPtr			mp_SpringB;
+	
+	
 	CSimulation*		mp_Phys;
 };
 

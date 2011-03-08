@@ -156,10 +156,27 @@ void CTagStroke::AttachSprings()
 	//	TPointList::iterator it2 = it1+1;
 	//	TPointList::iterator it3 = it2+1;
 
-	//	for(; it3 != m_Points.end(); ++it1, ++it1, ++it2)
-	//	{
-	//		(*it1)->SetupPhysicsObjects(**it2, **it3);
-	//	}
+	TPointList::iterator it1 = m_Points.begin();
+	TPointList::iterator it2 = it1;
+	++it2;
+	TPointList::iterator it3 = it2;
+	++it3;
+	
+	for(; it3 != m_Points.end();)
+	{
+		(*it1)->SetupPhysicsObjects(*it2, *it3);
+		++it1;
+		++it2;
+		++it3;
+	}
+	
+	--it2;
+	--it3;
+	
+	(*it2)->SetupPhysicsObjects(*it3, NULL);
+	(*it3)->SetupPhysicsObjects(NULL, NULL);
+	
+	
 	//}
 }
 
@@ -321,7 +338,7 @@ m_CurrTransition(TRANSITION_IN)
 {
 	static float time_step = 1.0f/30.0f;
 	mp_Phys = new CSimulation(time_step);
-	mp_Phys->AddGlobalForce(new CGravity(ci::Vec3f(0, 9.81f, 0)));
+	mp_Phys->AddGlobalForce(new CGravity(ci::Vec3f(0, 0, 9.81f)));
 
 	XmlTree doc(loadFile(file_path));
 	ParseXML(doc);
@@ -345,7 +362,7 @@ CTag::~CTag()
 		delete *it;
 	}
 
-	delete mp_Phys;
+	//delete mp_Phys;
 }
 
 //*******************************************************************************************************
@@ -411,6 +428,9 @@ void CTag::ResetTransition(ETransitionType type)
 //*******************************************************************************************************
 void CTag::Update()
 {
+	static float time_step = 1.0f/30.0f;
+	mp_Phys->Update(time_step);
+	
 	for(u32 i_stroke=0; i_stroke<m_Strokes.size(); ++i_stroke)
 	{
 		float update_time = GrafDrawingParams::g_UpdateSpeed;
@@ -472,8 +492,8 @@ void CTag::Draw()
 {
 	if(true)
 	{
-		mp_Phys->Draw();
-		return;
+		//mp_Phys->Draw();
+		//return;
 	}
 
 	ci::TriMesh tri_mesh;
@@ -571,7 +591,7 @@ void CTag::Draw()
 	//glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 	//glColor3f(1,1,1);
 
-	//gl::enableWireframe();
+	gl::enableWireframe();
 	//gl::enableAlphaBlending();
 	//gl::enableAdditiveBlending();
 	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

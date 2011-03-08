@@ -2,6 +2,8 @@
 #include "GMLData.h"
 #include "cinder/app/AppBasic.h"
 
+#include "cinder/Rand.h"
+
 #include "Physics/Simulation.h"
 
 #include <math.h>
@@ -20,22 +22,46 @@ mp_Phys(p_phys)
 	m_Colour = Vec4f(0,0,0,1);
 	//Reset();
 
-	mp_SimObj = TSimObjectPtr(new CSimObject(SIM_OBJECT_STATIC, 1, ci::Vec3f(x,y,z)));
-	mp_Phys->AddSimObject(&(*mp_SimObj));
+	mp_SimObj = TSimObjectPtr(new CSimObject(SIM_OBJECT_DYNAMIC, 0.1f, ci::Vec3f(x,y,z)));
+	mp_Phys->AddSimObject(mp_SimObj);
 }
 
 //*******************************************************************************************************
 CTagPoint::~CTagPoint()
 {
 	mp_Phys->RemoveSimObject(mp_SimObj);
-	mp_SimObj = NULL;
+	mp_Phys->RemoveSimObject(mp_StaticSimObj);
+	//mp_SimObj = NULL;
 	//mp_SimObj.reset();
 }
 
-//*******************************************************************************************************
-void CTagPoint::SetupPhysicsObjects(CTagPoint& p1, CTagPoint& p2)
-{
+Rand r(12302);
 
+//*******************************************************************************************************
+void CTagPoint::SetupPhysicsObjects(CTagPoint* p1, CTagPoint* p2)
+{
+	mp_StaticSimObj = TSimObjectPtr(new CSimObject(SIM_OBJECT_STATIC, 1, mp_SimObj->GetCurrPos()));
+	mp_Phys->AddSimObject(mp_StaticSimObj);
+	
+	static float stiffness = 10.1f;
+	
+	mp_StaticSpring = TSpringPtr(new CTensionSpring(stiffness, 0.1f, mp_SimObj, mp_StaticSimObj));
+	mp_Phys->AddSpring(mp_StaticSpring);
+
+	if(p1 != NULL)
+	{
+		mp_SpringA = TSpringPtr(new CSpring(stiffness, 0.1f, mp_SimObj, p1->GetSimObject()));
+		mp_Phys->AddSpring(mp_SpringA);
+		
+		if(p2 != NULL)
+		{
+			mp_SpringB = TSpringPtr(new CSpring(stiffness, 0.1f, mp_SimObj, p2->GetSimObject()));
+			mp_Phys->AddSpring(mp_SpringB);
+		}
+	}
+	
+	
+	mp_SimObj->ApplyForce(r.nextVec3f()*1.0f);
 }
 
 /*

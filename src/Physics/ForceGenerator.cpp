@@ -33,6 +33,26 @@ void CSpring::ApplyForce()
 //*********************************************************************************
 void CSpring::Draw()
 {
-	glColor3f(1,1,1);
+	glColor3f(0,0,1);
 	gl::drawLine(m_SimObjectA->GetCurrPos(), m_SimObjectB->GetCurrPos());
 }
+
+//*********************************************************************************
+//*********************************************************************************
+void CTensionSpring::ApplyForce()
+{
+	Vec3f direction = m_SimObjectA->GetCurrPos() - m_SimObjectB->GetCurrPos();
+	float curr_length = direction.length();
+	if(curr_length > m_RestLength)
+	{
+		direction.normalize();
+		Vec3f force = -m_Stiffness * ((curr_length - m_RestLength) * direction);
+		
+		//add damping force
+		force += -m_Damping * (m_SimObjectA->GetVelocity() - m_SimObjectB->GetVelocity()).dot(direction) * direction;
+		
+		m_SimObjectA->ApplyForce(force);
+		m_SimObjectB->ApplyForce(-force);
+	}
+}
+

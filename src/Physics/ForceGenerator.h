@@ -9,7 +9,7 @@
 #pragma once;
 #include "SimObject.h"
 #include "boost/shared_ptr.hpp"
-
+#include "cinder/App/App.h"
 //-----------------------------------------------------------------------------------------------------
 class CForceGeneratorBase
 {
@@ -19,6 +19,8 @@ public:
 
 	virtual void Draw() {}
 };
+
+typedef boost::shared_ptr<CForceGeneratorBase> TForceGeneratorPtr;
 
 //-----------------------------------------------------------------------------------------------------
 class CGravity : public CForceGeneratorBase
@@ -61,27 +63,32 @@ private:
 };
 
 //-----------------------------------------------------------------------------------------------------
-class CSpring : public CForceGeneratorBase
+class CSpringBase : public CForceGeneratorBase
+{
+};
+
+//-----------------------------------------------------------------------------------------------------
+class CSpring : public CSpringBase
 {
 public:
-	CSpring(float stiffness, float damping, CSimObjectBase *p_obj_a, CSimObjectBase *p_obj_b)
+	CSpring(float stiffness, float damping, TSimObjectPtr& obj_a, TSimObjectPtr& obj_b)
 	:
 	m_Stiffness(stiffness),
 	m_Damping(damping)
 	{
-		m_SimObjectA = TSimObjectPtr(p_obj_a);
-		m_SimObjectB = TSimObjectPtr(p_obj_b);
-		m_RestLength = (p_obj_a->GetCurrPos() - p_obj_b->GetCurrPos()).length();
+		m_SimObjectA = obj_a;
+		m_SimObjectB = obj_b;
+		m_RestLength = (obj_a->GetCurrPos() - obj_b->GetCurrPos()).length();
 	}
 	
-	CSpring(float stiffness, float damping, CSimObjectBase* p_obj_a, CSimObjectBase* p_obj_b, float rest_length)
+	CSpring(float stiffness, float damping, TSimObjectPtr& obj_a, TSimObjectPtr& obj_b, float rest_length)
 	:
 	m_Stiffness(stiffness),
 	m_Damping(damping),
 	m_RestLength(rest_length)
 	{
-		m_SimObjectA = TSimObjectPtr(p_obj_a);
-		m_SimObjectB = TSimObjectPtr(p_obj_b);
+		m_SimObjectA = obj_a;
+		m_SimObjectB = obj_b;
 	}
 	
 	virtual void ApplyGlobalForce(CSimObjectBase& sim_object) {};
@@ -89,7 +96,7 @@ public:
 
 	virtual void Draw();
 	
-private:
+protected:
 	float	m_Stiffness;
 	float	m_Damping;
 	float	m_RestLength;
@@ -97,3 +104,25 @@ private:
 	TSimObjectPtr m_SimObjectA;
 	TSimObjectPtr m_SimObjectB;
 };
+
+//-----------------------------------------------------------------------------------------------------
+class CTensionSpring : public CSpring
+{
+public:
+	CTensionSpring(float stiffness, float damping, TSimObjectPtr& obj_a, TSimObjectPtr& obj_b)
+	:
+	CSpring(stiffness, damping, obj_a, obj_b)
+	{
+	}
+
+	CTensionSpring(float stiffness, float damping, TSimObjectPtr& obj_a, TSimObjectPtr& obj_b, float rest_length)
+	:
+	CSpring(stiffness, damping, obj_a, obj_b, rest_length)
+	{
+	}
+	
+	virtual void ApplyForce();
+};
+
+typedef boost::shared_ptr<CSpringBase> TSpringPtr;
+

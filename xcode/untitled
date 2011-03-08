@@ -1,0 +1,51 @@
+
+import bpy
+import mathutils
+import math
+
+rot = math.pi
+rot = 0
+
+Thing = bpy.data.objects["mesh_arm_upper_l.png"]
+Thing.rotation_euler = mathutils.Vector((0,0,rot))
+
+Thing = bpy.data.objects["mesh_arm_lwr_l.png"]
+Thing.rotation_euler = mathutils.Vector((0,0,rot))
+
+
+class FlipPanel(bpy.types.Panel):
+	bl_label = "Flip"
+	bl_space_type = "PROPERTIES"
+	bl_region_type = "WINDOW"
+	bl_context = "object"
+ 
+	def draw(self, context):
+		layout = self.layout
+ 
+		scn = bpy.context.scene
+		row = layout.row()
+		col = row.column()
+		col.prop( scn, "angle" )
+		row = layout.row()
+		row.operator( "flip_op" )
+ 
+ 
+ 
+class CityOperator(bpy.types.Operator):
+	bl_idname = "flip_op"
+	bl_label = "Press to Detonate"
+ 
+	def execute(self, context):
+		Angle = bpy.context.scene.Angle
+		
+		Thing = bpy.data.objects["mesh_arm_upper_l.png"]
+		Thing.rotation_euler = mathutils.Vector((0,0,Angle))
+		Thing = bpy.data.objects["mesh_arm_lwr_l.png"]
+		Thing.rotation_euler = mathutils.Vector((0,0,Angle))
+		
+#		self.report( "INFO", "BOOM!  You just destroyed the city of " + cityName )
+		return {'FINISHED'}
+  
+ 
+if __name__ == '__main__':
+    bpy.types.Scene.Angle = bpy.props.FloatProperty(  name="Angle", description = "Angle (in degrees)")

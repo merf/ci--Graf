@@ -15,11 +15,16 @@
 		00B784B60FF439BC000DE1D7 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00B784B20FF439BC000DE1D7 /* CoreAudio.framework */; };
 		00BAE65A0E7ED9C10018A608 /* GrafApp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00BAE6590E7ED9C10018A608 /* GrafApp.cpp */; };
 		00CCAF15116A9FEE008396D5 /* CinderApp.icns in Resources */ = {isa = PBXBuildFile; fileRef = 00CCAF14116A9FEE008396D5 /* CinderApp.icns */; };
+		281084ED1326DE0400F4BA78 /* untitled in Resources */ = {isa = PBXBuildFile; fileRef = 281084EC1326DE0400F4BA78 /* untitled */; };
 		2828781812F73B8800304312 /* Spline.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2828781412F73B8800304312 /* Spline.cpp */; };
 		2828781912F73B8800304312 /* TagCollection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2828781612F73B8800304312 /* TagCollection.cpp */; };
 		28B0A1C412FB3AFD00BE3C96 /* TagPoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28B0A1C112FB3AFD00BE3C96 /* TagPoint.cpp */; };
 		28B0A20012FB3E0F00BE3C96 /* SimpleGUI.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28B0A1FF12FB3E0F00BE3C96 /* SimpleGUI.cpp */; };
 		28B0A21312FB3E6100BE3C96 /* pf_tempesta_seven.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 28B0A21212FB3E6100BE3C96 /* pf_tempesta_seven.ttf */; };
+		28BE14E713217A1500C27136 /* ForceGenerator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28BE14DF13217A1500C27136 /* ForceGenerator.cpp */; };
+		28BE14E813217A1500C27136 /* Integrator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28BE14E113217A1500C27136 /* Integrator.cpp */; };
+		28BE14E913217A1500C27136 /* SimObject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28BE14E313217A1500C27136 /* SimObject.cpp */; };
+		28BE14EA13217A1500C27136 /* Simulation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28BE14E513217A1500C27136 /* Simulation.cpp */; };
 		28E9D5B212F465210060D1F9 /* GMLData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28E9D5B112F465210060D1F9 /* GMLData.cpp */; };
 		5323E6B20EAFCA74003A9687 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B10EAFCA74003A9687 /* CoreVideo.framework */; };
 		5323E6B60EAFCA7E003A9687 /* QTKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B50EAFCA7E003A9687 /* QTKit.framework */; };
@@ -38,6 +43,7 @@
 		00CCAF14116A9FEE008396D5 /* CinderApp.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = CinderApp.icns; sourceTree = SOURCE_ROOT; };
 		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		13E42FB307B3F0F600E4EEF1 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = /System/Library/Frameworks/CoreData.framework; sourceTree = "<absolute>"; };
+		281084EC1326DE0400F4BA78 /* untitled */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = untitled; sourceTree = "<group>"; };
 		2828781412F73B8800304312 /* Spline.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Spline.cpp; path = ../src/Spline.cpp; sourceTree = SOURCE_ROOT; };
 		2828781512F73B8800304312 /* Spline.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Spline.h; path = ../src/Spline.h; sourceTree = SOURCE_ROOT; };
 		2828781612F73B8800304312 /* TagCollection.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TagCollection.cpp; path = ../src/TagCollection.cpp; sourceTree = SOURCE_ROOT; };
@@ -47,6 +53,14 @@
 		28B0A1C312FB3AFD00BE3C96 /* types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = types.h; path = ../src/types.h; sourceTree = SOURCE_ROOT; };
 		28B0A1FF12FB3E0F00BE3C96 /* SimpleGUI.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SimpleGUI.cpp; path = ../../../blocks/MowaLibs/SimpleGUI/src/SimpleGUI.cpp; sourceTree = SOURCE_ROOT; };
 		28B0A21212FB3E6100BE3C96 /* pf_tempesta_seven.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = pf_tempesta_seven.ttf; path = ../../../blocks/MowaLibs/SimpleGUI/resources/pf_tempesta_seven.ttf; sourceTree = SOURCE_ROOT; };
+		28BE14DF13217A1500C27136 /* ForceGenerator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ForceGenerator.cpp; path = ../src/Physics/ForceGenerator.cpp; sourceTree = SOURCE_ROOT; };
+		28BE14E013217A1500C27136 /* ForceGenerator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ForceGenerator.h; path = ../src/Physics/ForceGenerator.h; sourceTree = SOURCE_ROOT; };
+		28BE14E113217A1500C27136 /* Integrator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Integrator.cpp; path = ../src/Physics/Integrator.cpp; sourceTree = SOURCE_ROOT; };
+		28BE14E213217A1500C27136 /* Integrator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Integrator.h; path = ../src/Physics/Integrator.h; sourceTree = SOURCE_ROOT; };
+		28BE14E313217A1500C27136 /* SimObject.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SimObject.cpp; path = ../src/Physics/SimObject.cpp; sourceTree = SOURCE_ROOT; };
+		28BE14E413217A1500C27136 /* SimObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SimObject.h; path = ../src/Physics/SimObject.h; sourceTree = SOURCE_ROOT; };
+		28BE14E513217A1500C27136 /* Simulation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Simulation.cpp; path = ../src/Physics/Simulation.cpp; sourceTree = SOURCE_ROOT; };
+		28BE14E613217A1500C27136 /* Simulation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Simulation.h; path = ../src/Physics/Simulation.h; sourceTree = SOURCE_ROOT; };
 		28E9D5A912F464590060D1F9 /* GMLData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GMLData.h; path = ../include/GMLData.h; sourceTree = SOURCE_ROOT; };
 		28E9D5B112F465210060D1F9 /* GMLData.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GMLData.cpp; path = ../src/GMLData.cpp; sourceTree = SOURCE_ROOT; };
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
@@ -83,6 +97,8 @@
 		080E96DDFE201D6D7F000001 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				281084EC1326DE0400F4BA78 /* untitled */,
+				28BE14D7132179FE00C27136 /* Physics */,
 				28B0A1C112FB3AFD00BE3C96 /* TagPoint.cpp */,
 				28B0A1C212FB3AFD00BE3C96 /* TagPoint.h */,
 				28B0A1C312FB3AFD00BE3C96 /* types.h */,
@@ -137,6 +153,21 @@
 				28B0A1FF12FB3E0F00BE3C96 /* SimpleGUI.cpp */,
 			);
 			name = Blocks;
+			sourceTree = "<group>";
+		};
+		28BE14D7132179FE00C27136 /* Physics */ = {
+			isa = PBXGroup;
+			children = (
+				28BE14DF13217A1500C27136 /* ForceGenerator.cpp */,
+				28BE14E013217A1500C27136 /* ForceGenerator.h */,
+				28BE14E113217A1500C27136 /* Integrator.cpp */,
+				28BE14E213217A1500C27136 /* Integrator.h */,
+				28BE14E313217A1500C27136 /* SimObject.cpp */,
+				28BE14E413217A1500C27136 /* SimObject.h */,
+				28BE14E513217A1500C27136 /* Simulation.cpp */,
+				28BE14E613217A1500C27136 /* Simulation.h */,
+			);
+			name = Physics;
 			sourceTree = "<group>";
 		};
 		29B97314FDCFA39411CA2CEA /* Graf */ = {
@@ -232,6 +263,7 @@
 			files = (
 				00CCAF15116A9FEE008396D5 /* CinderApp.icns in Resources */,
 				28B0A21312FB3E6100BE3C96 /* pf_tempesta_seven.ttf in Resources */,
+				281084ED1326DE0400F4BA78 /* untitled in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -248,6 +280,10 @@
 				2828781912F73B8800304312 /* TagCollection.cpp in Sources */,
 				28B0A1C412FB3AFD00BE3C96 /* TagPoint.cpp in Sources */,
 				28B0A20012FB3E0F00BE3C96 /* SimpleGUI.cpp in Sources */,
+				28BE14E713217A1500C27136 /* ForceGenerator.cpp in Sources */,
+				28BE14E813217A1500C27136 /* Integrator.cpp in Sources */,
+				28BE14E913217A1500C27136 /* SimObject.cpp in Sources */,
+				28BE14EA13217A1500C27136 /* Simulation.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -22,18 +22,15 @@ public:
 		m_Integrator = boost::shared_ptr<CIntegratorBase>(p_integrator);
 	}
 	
-	void AddSpring(CSpring* p_spring) { m_Springs.push_back(TForceGeneratorPtr(p_spring)); }
+	void AddSpring(TSpringPtr& spring) { m_Springs.push_back(spring); }
 	void AddGlobalForce(CForceGeneratorBase* p_force) { m_GlobalForces.push_back(TForceGeneratorPtr(p_force)); }
-	void AddSimObject(CSimObjectBase* p_sim_object) { m_SimObjects.push_back(TSimObjectPtr(p_sim_object)); }
+	void AddSimObject(TSimObjectPtr& sim_object) { m_SimObjects.push_back(sim_object); }
 	void RemoveSimObject(TSimObjectPtr& sim_object);
 	
 	void Update(float delta_time);
 	void Draw();
 	
-protected:
-	typedef boost::shared_ptr<CSimObjectBase> TSimObjectPtr;
-	typedef boost::shared_ptr<CForceGeneratorBase> TForceGeneratorPtr;
-	
+protected:	
 	typedef std::list<TSimObjectPtr > TSimObjectList;
 	typedef std::list<TForceGeneratorPtr > TForceGeneratorList;
 	

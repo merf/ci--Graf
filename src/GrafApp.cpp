@@ -53,9 +53,23 @@ public:
 	SimpleGUI* gui;
 };
 
+void Assign(boost::shared_ptr<float>& p1, boost::shared_ptr<float>& p2)
+{
+	p1 = p2;
+}
+
 //*************************************************************************************************************************
 void GrafAppApp::setup()
 {	
+	boost::shared_ptr<float> mySample(new float); 
+	console() << mySample.use_count() << "\n"; // should be 1
+	boost::shared_ptr<float> mySample2;
+	Assign(mySample2, mySample); // should be 2 refs by now
+	console() << mySample.use_count() << "\n"; // should be 2
+	mySample.reset(); 
+	console() << mySample.use_count() << "\n"; // should be 1
+	console() << mySample2.use_count() << "\n"; // should be 1
+	
 	setWindowSize(1280, 1024);
 	setWindowSize(640, 480);
 
@@ -151,7 +165,7 @@ void GrafAppApp::update()
 //*************************************************************************************************************************
 void GrafAppApp::draw()
 {
-	glEnable(GL_LIGHTING);
+	//glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
 	glEnable(GL_CULL_FACE);
 
@@ -209,6 +223,8 @@ void GrafAppApp::draw()
 	gl::disableDepthRead();	
 	gl::disableDepthWrite();
 	gl::enableAlphaBlending();
+	glDisable(GL_FOG);
+
 
 	glColor3f(1,1,1);
 	float text_size = 24;
